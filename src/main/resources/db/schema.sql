@@ -26,12 +26,20 @@ CREATE TABLE IF NOT EXISTS leaderboard (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- game_records: lưu lịch sử mỗi trận (PvE và PvP offline đều dùng)
+-- player1_id  : UUID của user đang đăng nhập (FK bắt buộc)
+-- player2_id  : NULL hoặc UUID user thứ 2 nếu cả 2 cùng có tài khoản (không bắt buộc)
+-- player1_name: tên hiển thị của player 1 (lấy từ username)
+-- player2_name: tên hiển thị của player 2 (nhập tay khi PvP offline, hoặc "AI" khi PvE)
+-- winner_name : tên hiển thị của người thắng (không cần FK)
 CREATE TABLE IF NOT EXISTS game_records (
     id                VARCHAR(36)  PRIMARY KEY,
     room_id           VARCHAR(36),
     player1_id        VARCHAR(36)  NOT NULL,
-    player2_id        VARCHAR(36),
-    winner_id         VARCHAR(36)  NOT NULL,
+    player2_id        VARCHAR(36),                -- NULL khi PvE hoặc PvP offline 1 tài khoản
+    player1_name      VARCHAR(100) NOT NULL DEFAULT '',
+    player2_name      VARCHAR(100) NOT NULL DEFAULT 'AI',
+    winner_name       VARCHAR(100) NOT NULL DEFAULT '',
     mode              VARCHAR(10)  NOT NULL DEFAULT 'PvE',
     player1_score     INT          NOT NULL DEFAULT 0,
     player2_score     INT          NOT NULL DEFAULT 0,
@@ -39,4 +47,5 @@ CREATE TABLE IF NOT EXISTS game_records (
     duration_seconds  INT          NOT NULL DEFAULT 0,
     played_at         DATETIME     NOT NULL DEFAULT NOW(),
     FOREIGN KEY (player1_id) REFERENCES users(id)
+    -- player2_id và winner_name KHÔNG có FK vì có thể là tên offline
 );

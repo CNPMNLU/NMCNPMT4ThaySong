@@ -47,7 +47,6 @@
       <h2>🎯 Lưới địch — bắn vào đây</h2>
       <div class="grid-container">
         <div class="grid-header">
-          <div style="width:var(--cell-size)"></div>
           <% String[] c2 = {"A","B","C","D","E","F","G","H","I","J"};
              for(String c : c2) { %><div class="grid-label"><%=c%></div><% } %>
         </div>
@@ -69,7 +68,6 @@
       <h2>🛡 Lưới của bạn</h2>
       <div class="grid-container">
         <div class="grid-header">
-          <div style="width:var(--cell-size)"></div>
           <% for(String c : c2) { %><div class="grid-label"><%=c%></div><% } %>
         </div>
         <% for(int y=0;y<10;y++) { %>
@@ -129,7 +127,6 @@
       <div>
         <div class="grid-container" id="pvp-setup-grid">
           <div class="grid-header">
-            <div style="width:var(--cell-size)"></div>
             <% String[] cols2 = {"A","B","C","D","E","F","G","H","I","J"};
                for(String c : cols2) { %><div class="grid-label"><%=c%></div><% } %>
           </div>

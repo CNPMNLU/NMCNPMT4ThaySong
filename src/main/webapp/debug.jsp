@@ -1,5 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="jakarta.servlet.http.HttpSession" %>
+<%@ page import="java.security.MessageDigest" %>
+<%@ page import="java.sql.*" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -247,3 +249,153 @@
 <p style="color:#475569;font-size:0.8rem;margin-top:24px">⚠ Xóa file debug.jsp trước khi deploy production!</p>
 </body>
 </html>
+<!-- ============================================================ -->
+<!-- PHẦN MỞ RỘNG: DEBUG GAME_RECORDS & TEST INSERT              -->
+<!-- ============================================================ -->
+<%
+  // Mở lại kết nối cho phần mới
+  Connection conn2 = null;
+  String connError2 = null;
+  try {
+    Class.forName("com.mysql.cj.jdbc.Driver");
+    conn2 = DriverManager.getConnection(
+      "jdbc:mysql://localhost:3306/battleship?useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true",
+      "root", "");
+  } catch (Exception e2) {
+    connError2 = e2.getMessage();
+  }
+%>
+
+<!-- 6. KIỂM TRA CẤU TRÚC BẢNG GAME_RECORDS -->
+<h2>6. Cấu trúc bảng game_records</h2>
+<div class="box">
+<% if (conn2 != null) {
+  try {
+    DatabaseMetaData meta2 = conn2.getMetaData();
+    ResultSet cols2 = meta2.getColumns(null, null, "game_records", null);
+    boolean hasTable2 = false;
+%>
+  <table>
+    <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th></tr>
+<%  while (cols2.next()) {
+      hasTable2 = true;
+%>
+    <tr>
+      <td><b><%= cols2.getString("COLUMN_NAME") %></b></td>
+      <td><%= cols2.getString("TYPE_NAME") %></td>
+      <td><%= cols2.getString("IS_NULLABLE") %></td>
+    </tr>
+<%  }
+    if (!hasTable2) { %>
+      <tr><td colspan="3" class="err">❌ Bảng game_records KHÔNG TỒN TẠI — chạy schema.sql!</td></tr>
+<%  } %>
+  </table>
+<% } catch (Exception e2) { %>
+  <p class="err">Lỗi: <%= e2.getMessage() %></p>
+<% } } else { %>
+  <p class="warn">⚠ DB chưa kết nối</p>
+<% } %>
+</div>
+
+<!-- 7. DỮ LIỆU GAME_RECORDS -->
+<h2>7. Dữ liệu bảng game_records (10 gần nhất)</h2>
+<div class="box">
+<% if (conn2 != null) {
+  try {
+    Statement st2 = conn2.createStatement();
+    ResultSet rs2 = st2.executeQuery(
+      "SELECT gr.id, gr.mode, gr.winner_id, gr.player1_score, gr.total_shots, gr.played_at, " +
+      "  u1.username as p1name " +
+      "FROM game_records gr " +
+      "LEFT JOIN users u1 ON gr.player1_id = u1.id " +
+      "ORDER BY gr.played_at DESC LIMIT 10"
+    );
+    boolean hasRows2 = false;
+%>
+  <table>
+    <tr><th>ID (6 ký tự)</th><th>Mode</th><th>Winner</th><th>Player1</th><th>Score</th><th>Shots</th><th>Played At</th></tr>
+<% while (rs2.next()) {
+     hasRows2 = true;
+     String shortId = rs2.getString("id");
+     if (shortId != null && shortId.length() > 8) shortId = shortId.substring(0, 8) + "...";
+%>
+    <tr>
+      <td style="font-size:0.8rem;color:#94a3b8"><%= shortId %></td>
+      <td><%= rs2.getString("mode") %></td>
+      <td><%= rs2.getString("winner_id") %></td>
+      <td><%= rs2.getString("p1name") != null ? rs2.getString("p1name") : "<span style='color:#f87171'>null/not found</span>" %></td>
+      <td><%= rs2.getInt("player1_score") %></td>
+      <td><%= rs2.getInt("total_shots") %></td>
+      <td style="font-size:0.8rem"><%= rs2.getTimestamp("played_at") %></td>
+    </tr>
+<% }
+   if (!hasRows2) { %>
+    <tr><td colspan="7" class="warn">⚠ Bảng game_records TRỐNG — chưa có trận đấu nào được lưu</td></tr>
+<% } %>
+  </table>
+<% } catch (Exception e2) { %>
+  <p class="err">Lỗi đọc game_records: <%= e2.getMessage() %></p>
+  <pre><%= e2.getClass().getName() %>: <%= e2.getMessage() %></pre>
+<% } } else { %>
+  <p class="warn">⚠ DB chưa kết nối</p>
+<% } %>
+</div>
+
+<!-- 8. TEST INSERT GAME_RECORD -->
+<h2>8. Test Insert game_record trực tiếp</h2>
+<div class="box">
+<%
+  String doTestInsert = request.getParameter("testInsert");
+  if ("1".equals(doTestInsert) && conn2 != null) {
+    try {
+      // Lấy một user bất kỳ để test
+      Statement stUser = conn2.createStatement();
+      ResultSet rsUser = stUser.executeQuery("SELECT id FROM users LIMIT 1");
+      if (!rsUser.next()) {
+%>
+        <p class="err">❌ Không có user nào trong DB — tạo tài khoản trước!</p>
+<%    } else {
+        String testUserId = rsUser.getString("id");
+        String testId = java.util.UUID.randomUUID().toString();
+        PreparedStatement psTest = conn2.prepareStatement(
+          "INSERT INTO game_records (id,room_id,player1_id,player2_id,winner_id,mode,player1_score,player2_score,total_shots,duration_seconds,played_at) " +
+          "VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+        );
+        psTest.setString(1, testId);
+        psTest.setString(2, "test-room");
+        psTest.setString(3, testUserId);
+        psTest.setNull(4, java.sql.Types.VARCHAR);   // PvE: player2 = null
+        psTest.setString(5, "AI_PLAYER");
+        psTest.setString(6, "PvE");
+        psTest.setInt(7, 100);
+        psTest.setInt(8, 0);
+        psTest.setInt(9, 30);
+        psTest.setInt(10, 60);
+        psTest.setTimestamp(11, new java.sql.Timestamp(System.currentTimeMillis()));
+        psTest.executeUpdate();
+%>
+        <p class="ok">✅ INSERT thành công! Record ID: <%= testId.substring(0,8) %>...</p>
+        <p style="color:#94a3b8">→ Bây giờ bấm F5 để thấy record ở mục 7 ở trên</p>
+<%    }
+    } catch (Exception e2) {
+%>
+        <p class="err">❌ INSERT THẤT BẠI!</p>
+        <pre><%= e2.getClass().getName() %>: <%= e2.getMessage() %></pre>
+        <div class="fix">
+          ⚠️ Đây là lỗi gốc khiến lịch sử không được lưu.<br>
+          Sao chép lỗi trên và báo lại để được hỗ trợ.
+        </div>
+<%  }
+  } else {
+%>
+  <p style="color:#94a3b8">Bấm nút bên dưới để chạy INSERT thử vào bảng game_records:</p>
+  <a href="?testInsert=1" class="btn" style="display:inline-block;margin-top:8px">
+    🧪 Test INSERT game_record ngay
+  </a>
+<% } %>
+<% if (conn2 != null) { try { conn2.close(); } catch(Exception e){} } %>
+</div>
+
+<style>
+.btn { background:#2563eb; color:white; border:none; padding:8px 18px; border-radius:4px; cursor:pointer; text-decoration:none; }
+</style>

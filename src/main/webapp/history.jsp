@@ -29,6 +29,8 @@
     List<GameRecord> records = (List<GameRecord>) request.getAttribute("records");
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     String playerId = (String) session.getAttribute("playerId");
+    String loginName = (String) session.getAttribute("playerName");
+    if (loginName == null) loginName = "Bạn";
   %>
 
   <% if (records == null || records.isEmpty()) { %>
@@ -43,29 +45,48 @@
         <th>Thời gian</th>
         <th>Chế độ</th>
         <th>Đối thủ</th>
+        <th>Người thắng</th>
         <th>Kết quả</th>
         <th>Điểm</th>
         <th>Số lượt</th>
         <th>Thời gian trận</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
     <% for (GameRecord r : records) {
-        boolean won = playerId.equals(r.getWinnerId());
-        String opponent = "PvE".equals(r.getMode()) ? "🤖 AI" :
-            (playerId.equals(r.getPlayer1Id()) ? r.getPlayer2Username() : r.getPlayer1Username());
-        int myScore = playerId.equals(r.getPlayer1Id()) ? r.getPlayer1Score() : r.getPlayer2Score();
+        // Đối thủ: dùng player2Name (đã lưu trong DB — "AI" hoặc tên nhập)
+        String opponent = r.getDisplayPlayer2();
+        if ("PvE".equals(r.getMode())) opponent = "🤖 AI";
+
+        // Người thắng: lấy từ winner_name đã lưu
+        String winnerDisplay = r.getDisplayWinner();
+
+        // Kết quả: so tên đăng nhập với winner_name
+        boolean won = loginName.equalsIgnoreCase(winnerDisplay)
+                   || playerId.equals(r.getPlayer1Id()) && loginName.equalsIgnoreCase(r.getWinnerName());
+        // Fallback: nếu winner_name = tên mình
+        String resultLabel = won ? "✓ Thắng" : "✗ Thua";
+        String resultClass = won ? "badge-win" : "badge-lose";
+
+        // Điểm: player1 là người đang đăng nhập (always)
+        int myScore = r.getPlayer1Score();
     %>
       <tr>
         <td style="color:var(--text-muted);font-size:0.85rem">
           <%= r.getPlayedAt() != null ? r.getPlayedAt().format(fmt) : "—" %>
         </td>
         <td><span class="badge <%= "PvE".equals(r.getMode()) ? "badge-pve" : "badge-pvp" %>"><%= r.getMode() %></span></td>
-        <td><%= opponent != null ? opponent : "—" %></td>
-        <td><span class="badge <%= won ? "badge-win" : "badge-lose" %>"><%= won ? "✓ Thắng" : "✗ Thua" %></span></td>
+        <td><%= opponent %></td>
+        <td style="font-weight:600"><%= winnerDisplay %></td>
+        <td><span class="badge <%= resultClass %>"><%= resultLabel %></span></td>
         <td style="color:var(--warning);font-weight:600"><%= myScore %></td>
         <td><%= r.getTotalShots() %> lượt</td>
         <td style="color:var(--text-muted)"><%= r.getDurationSeconds() %>s</td>
+        <td>
+          <a href="${pageContext.request.contextPath}/history?id=<%= r.getId() %>"
+             class="btn btn-secondary btn-sm">Chi tiết</a>
+        </td>
       </tr>
     <% } %>
     </tbody>

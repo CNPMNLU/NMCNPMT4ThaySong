@@ -3,16 +3,16 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Thiết lập trận đấu — Battleship</title>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-<style>
-@keyframes shake {
-  0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)}
-}
-.setup-controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thiết lập trận đấu — Battleship</title>
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+  <style>
+    @keyframes shake {
+      0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)}
+    }
+    .setup-controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  </style>
 </head>
 <body>
 <nav class="navbar">
@@ -97,7 +97,6 @@
       </div>
       <div class="grid-container" id="setup-grid">
         <div class="grid-header">
-          <div style="width:var(--cell-size)"></div>
           <% String[] cols = {"A","B","C","D","E","F","G","H","I","J"}; %>
           <% for(String c : cols) { %><div class="grid-label"><%=c%></div><% } %>
         </div>
@@ -127,52 +126,52 @@
 
 <script src="${pageContext.request.contextPath}/js/game.js"></script>
 <script>
-// Render ship dots
-const DOTS_COUNT = [5,4,3,3,2];
-DOTS_COUNT.forEach((len, i) => {
-  const el = document.getElementById('dots-' + i);
-  if (el) for(let d=0;d<len;d++) {
-    const dot = document.createElement('div');
-    dot.className = 'ship-dot';
-    el.appendChild(dot);
-  }
-});
-
-function selectMode(mode, el) {
-  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  document.getElementById('mode-input').value = mode;
-  document.getElementById('difficulty-row').style.display = mode === 'PvE' ? '' : 'none';
-  document.getElementById('p2name-row').style.display = mode === 'PvP' ? '' : 'none';
-}
-
-function selectDiff(d) {
-  document.getElementById('diff-input').value = d;
-  document.getElementById('diff-easy').style.borderColor = d==='Easy' ? 'var(--accent)' : '';
-  document.getElementById('diff-hard').style.borderColor = d==='Hard' ? 'var(--accent)' : '';
-}
-
-function doAutoPlace() {
-  resetSetup();
-  // Auto-place using JS for preview
-  const SHIPS = [{type:'Carrier',length:5},{type:'Battleship',length:4},{type:'Cruiser',length:3},{type:'Submarine',length:3},{type:'Destroyer',length:2}];
-  SHIPS.forEach((ship, idx) => {
-    let placed = false, tries = 0;
-    while (!placed && tries++ < 1000) {
-      const x = Math.floor(Math.random()*10);
-      const y = Math.floor(Math.random()*10);
-      const dir = Math.random() < 0.5 ? 'H' : 'V';
-      const prevDir = currentDir;
-      currentDir = dir;
-      if (canPlace(x, y, ship.length, dir)) {
-        placeShipOnSetup(x, y, ship, idx);
-        placed = true;
-      } else {
-        currentDir = prevDir;
-      }
+  // Render ship dots
+  const DOTS_COUNT = [5,4,3,3,2];
+  DOTS_COUNT.forEach((len, i) => {
+    const el = document.getElementById('dots-' + i);
+    if (el) for(let d=0;d<len;d++) {
+      const dot = document.createElement('div');
+      dot.className = 'ship-dot';
+      el.appendChild(dot);
     }
   });
-}
+
+  function selectMode(mode, el) {
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('mode-input').value = mode;
+    document.getElementById('difficulty-row').style.display = mode === 'PvE' ? '' : 'none';
+    document.getElementById('p2name-row').style.display = mode === 'PvP' ? '' : 'none';
+  }
+
+  function selectDiff(d) {
+    document.getElementById('diff-input').value = d;
+    document.getElementById('diff-easy').style.borderColor = d==='Easy' ? 'var(--accent)' : '';
+    document.getElementById('diff-hard').style.borderColor = d==='Hard' ? 'var(--accent)' : '';
+  }
+
+  function doAutoPlace() {
+    resetSetup();
+    // Auto-place using JS for preview
+    const SHIPS = [{type:'Carrier',length:5},{type:'Battleship',length:4},{type:'Cruiser',length:3},{type:'Submarine',length:3},{type:'Destroyer',length:2}];
+    SHIPS.forEach((ship, idx) => {
+      let placed = false, tries = 0;
+      while (!placed && tries++ < 1000) {
+        const x = Math.floor(Math.random()*10);
+        const y = Math.floor(Math.random()*10);
+        const dir = Math.random() < 0.5 ? 'H' : 'V';
+        const prevDir = currentDir;
+        currentDir = dir;
+        if (canPlace(x, y, ship.length, dir)) {
+          placeShipOnSetup(x, y, ship, idx);
+          placed = true;
+        } else {
+          currentDir = prevDir;
+        }
+      }
+    });
+  }
 </script>
 </body>
 </html>

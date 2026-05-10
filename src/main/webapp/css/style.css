@@ -215,7 +215,7 @@ a:hover { text-decoration: underline; }
 .grid-container { position: relative; display: inline-block; }
 .grid-header {
     display: flex;
-    padding-left: var(--cell-size); /* match row-label width */
+    padding-left: var(--cell-size);
     margin-bottom: 1px;
 }
 .grid-label {
@@ -524,3 +524,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     box-sizing: border-box;
 }
 .input-field:focus { outline: none; border-color: var(--accent); }
+/* Đảm bảo ô chữ (A-J), ô số (1-10) và ô lưới đồng bộ kích thước */
+.grid-label,
+.grid-row-label,
+.grid-cell,
+.grid-header > div:first-child {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box; /* Đây là dòng quan trọng nhất để sửa lỗi lệch cột */
+    margin: 0;
+    padding: 0;
+}

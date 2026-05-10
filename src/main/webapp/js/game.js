@@ -131,7 +131,9 @@ let pvpState = {
     currentPlayer: 1,
     board1: null, board2: null,
     ships1: null, ships2: null,
-    name1: 'Người chơi 1', name2: 'Người chơi 2'
+    name1: 'Người chơi 1', name2: 'Người chơi 2',
+    totalShots: 0,
+    startTime: null
 };
 let pvpPhase = 'setup2';
 let pvpSetupBoard2 = Array.from({length:10}, () => Array(10).fill(null));
@@ -169,6 +171,8 @@ function submitPvPSetup2() {
     pvpState.board2 = buildBoardFromShips(pvpState.ships2);
     document.getElementById('pvp-setup-overlay').style.display = 'none';
     pvpPhase = 'play';
+    pvpState.totalShots = 0;
+    pvpState.startTime = Date.now();
     pvpStartTurn(1);
 }
 
@@ -199,6 +203,7 @@ function fireShotPvP(x, y) {
     if (!cell || cell.classList.contains('hit-ship') || cell.classList.contains('miss') || cell.classList.contains('sunk-ship')) return;
 
     clearTimer();
+    pvpState.totalShots++;
     const c = targetBoard[x][y];
     c.hit = true;
 
@@ -229,6 +234,19 @@ function fireShotPvP(x, y) {
     if (result === 'GAME_OVER') {
         gameOver = true;
         renderPvPBoards(cp);
+        const durationSecs = pvpState.startTime ? Math.floor((Date.now() - pvpState.startTime) / 1000) : 0;
+        const winnerName = name;
+        const loserName  = cp === 1 ? pvpState.name2 : pvpState.name1;
+        // Lưu kết quả PvP vào DB qua server
+        fetch(contextPath + '/game', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'action=pvp_save'
+                + '&winner=' + encodeURIComponent(winnerName)
+                + '&loser='  + encodeURIComponent(loserName)
+                + '&shots='  + pvpState.totalShots
+                + '&duration=' + durationSecs
+        }).catch(e => console.warn('pvp_save failed:', e));
         showWinModal('🏆 ' + name + ' thắng!', 'Đã đánh chìm toàn bộ thuyền địch!', true);
         return;
     }
