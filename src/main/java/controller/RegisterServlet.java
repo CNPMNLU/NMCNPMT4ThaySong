@@ -23,9 +23,40 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        String username = req.getParameter("username");
-        String password = req.getParameter("password");
-        String email    = req.getParameter("email");
+
+        String username        = req.getParameter("username");
+        String password        = req.getParameter("password");
+        String confirmPassword = req.getParameter("confirmPassword");
+        String email           = req.getParameter("email");
+
+        if (username == null || username.trim().isEmpty()) {
+            req.setAttribute("error", "Vui lòng nhập tên đăng nhập");
+            preserveInput(req, username, email);
+            req.getRequestDispatcher("/register.jsp").forward(req, resp);
+            return;
+        }
+
+        if (password == null || password.isEmpty()) {
+            req.setAttribute("error", "Vui lòng nhập mật khẩu");
+            preserveInput(req, username, email);
+            req.getRequestDispatcher("/register.jsp").forward(req, resp);
+            return;
+        }
+
+        if (confirmPassword == null || confirmPassword.isEmpty()) {
+            req.setAttribute("error", "Vui lòng xác nhận mật khẩu");
+            preserveInput(req, username, email);
+            req.getRequestDispatcher("/register.jsp").forward(req, resp);
+            return;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            req.setAttribute("error", "Mật khẩu xác nhận không khớp");
+            preserveInput(req, username, email);
+            req.getRequestDispatcher("/register.jsp").forward(req, resp);
+            return;
+        }
+
         try {
             Player player = userService.register(username, password, email);
             HttpSession session = req.getSession(true);
@@ -34,7 +65,13 @@ public class RegisterServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/setup");
         } catch (Exception e) {
             req.setAttribute("error", e.getMessage() != null ? e.getMessage() : "Đăng ký thất bại");
+            preserveInput(req, username, email);
             req.getRequestDispatcher("/register.jsp").forward(req, resp);
         }
+    }
+
+    private void preserveInput(HttpServletRequest req, String username, String email) {
+        if (username != null) req.setAttribute("savedUsername", username.trim());
+        if (email    != null) req.setAttribute("savedEmail",    email.trim());
     }
 }
