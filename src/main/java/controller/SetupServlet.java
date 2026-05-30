@@ -60,7 +60,7 @@ public class SetupServlet extends HttpServlet {
             session.setAttribute("boardId",    boardId);
             session.setAttribute("mode",       mode);
             session.setAttribute("difficulty", difficulty);
-            session.setAttribute("board",      board);
+            session.setAttribute("board_" + playerId, board);
             session.setAttribute("gameState",  null);
             session.setAttribute("aiBoard",    null);
             session.setAttribute("aiService",  null);

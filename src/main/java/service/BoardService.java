@@ -1,5 +1,6 @@
 package service;
 
+import jakarta.servlet.http.HttpSession;
 import model.*;
 import java.sql.*;
 import java.util.*;
@@ -196,5 +197,30 @@ public class BoardService {
             if (rs.next()) return rs.getString("id");
         }
         return null;
+    }
+
+    public Board getBoardByRoomAndOwner(HttpSession session, String roomId, String ownerId) {
+        //trong lưu bộ nhớ, thường lưu board theo key động trong Session
+        //ví dụ: "board_PLAYER123" hoặc lưu trong một Map phòng đấu
+        String sessionKey = "board_" + ownerId;
+        Board board = (Board) session.getAttribute(sessionKey);
+
+        if (board == null) {
+            Board setupBoard = (Board) session.getAttribute("board");
+            if (setupBoard != null) {
+                board = setupBoard;
+                board.setRoomId(roomId);
+                board.setOwnerId(ownerId);
+            }else {
+                //chưa có board nào trong session (trận mới khởi tạo), tạo mới 10x10
+                //sinh một ID ngẫu nhiên cho Board
+                String generatedBoardId = java.util.UUID.randomUUID().toString();
+                board = createBoard(generatedBoardId, roomId, ownerId);
+            }
+            //đẩy ngược lại vào session để lưu trữ cho các lượt sau
+            session.setAttribute(sessionKey, board);
+        }
+
+        return board;
     }
 }
