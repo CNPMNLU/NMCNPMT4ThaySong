@@ -29,6 +29,7 @@ public class RegisterServlet extends HttpServlet {
         String confirmPassword = req.getParameter("confirmPassword");
         String email           = req.getParameter("email");
 
+        // --- Validate: username ---
         if (username == null || username.trim().isEmpty()) {
             req.setAttribute("error", "Vui lòng nhập tên đăng nhập");
             preserveInput(req, username, email);
@@ -36,6 +37,7 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
+        // --- Validate: password ---
         if (password == null || password.isEmpty()) {
             req.setAttribute("error", "Vui lòng nhập mật khẩu");
             preserveInput(req, username, email);
@@ -43,6 +45,7 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
+        // --- Validate: confirmPassword ---
         if (confirmPassword == null || confirmPassword.isEmpty()) {
             req.setAttribute("error", "Vui lòng xác nhận mật khẩu");
             preserveInput(req, username, email);

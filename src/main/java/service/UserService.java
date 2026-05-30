@@ -5,15 +5,27 @@ import model.Player;
 import java.security.MessageDigest;
 import java.sql.SQLException;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class UserService {
     private final UserDAO userDAO = new UserDAO();
+
+    // Pattern kiểm tra email cơ bản: có ký tự trước @, có domain, có phần mở rộng
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     public Player register(String username, String password, String email) throws Exception {
         if (username == null || username.trim().length() < 3)
             throw new IllegalArgumentException("Username phải ít nhất 3 ký tự");
         if (password == null || password.length() < 6)
             throw new IllegalArgumentException("Password phải ít nhất 6 ký tự");
+
+        // Validate email nếu user có nhập (email là tuỳ chọn)
+        if (email != null && !email.trim().isEmpty()) {
+            if (!EMAIL_PATTERN.matcher(email.trim()).matches())
+                throw new IllegalArgumentException("Email không đúng định dạng");
+        }
+
         if (userDAO.findByUsername(username.trim()) != null)
             throw new IllegalArgumentException("Username đã tồn tại");
 
@@ -21,7 +33,7 @@ public class UserService {
         p.setId(UUID.randomUUID().toString());
         p.setUsername(username.trim());
         p.setPasswordHash(hashPassword(password));
-        p.setEmail(email != null ? email.trim() : null);
+        p.setEmail(email != null && !email.trim().isEmpty() ? email.trim() : null);
         userDAO.insert(p);
         return p;
     }
@@ -31,7 +43,6 @@ public class UserService {
         if (p == null) throw new IllegalArgumentException("Username không tồn tại");
         if (!p.getPasswordHash().equals(hashPassword(password)))
             throw new IllegalArgumentException("Mật khẩu không đúng");
-        // Dùng try-catch riêng: lỗi cập nhật last_login KHÔNG được chặn đăng nhập
         try {
             userDAO.updateLastLogin(p.getId());
         } catch (Exception ignored) {
