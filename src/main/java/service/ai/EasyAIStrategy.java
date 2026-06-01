@@ -2,10 +2,12 @@ package service.ai;
 
 import model.Board;
 import model.Cell;
+
 import java.util.*;
 
 public class EasyAIStrategy implements AIStrategy {
     private final Random rand = new Random();
+    private static final long serialVersionUID = 1L;
 
     @Override
     public int[] selectTarget(Board opponentBoard) {
