@@ -81,33 +81,29 @@ public class SetupServlet extends HttpServlet {
     }
 
     private void parseAndPlaceShips(Board board, String shipsJson) {
-        shipsJson = shipsJson.trim();
-        // Remove outer brackets
-        if (shipsJson.startsWith("[")) shipsJson = shipsJson.substring(1);
-        if (shipsJson.endsWith("]"))   shipsJson = shipsJson.substring(0, shipsJson.length()-1);
-
-        // Split by },{
-        String[] entries = shipsJson.split("\\},\\s*\\{");
-        for (String entry : entries) {
-            try {
-                String type = extractJsonValue(entry, "type");
-                int length  = Integer.parseInt(extractJsonValue(entry, "length"));
-                int x       = Integer.parseInt(extractJsonValue(entry, "x"));
-                int y       = Integer.parseInt(extractJsonValue(entry, "y"));
-                String dir  = extractJsonValue(entry, "dir");
-
-                Ship ship = new Ship();
-                ship.setId(UUID.randomUUID().toString());
-                ship.setBoardId(board.getId());
-                ship.setType(type);
-                ship.setLength(length);
-                ship.setStartX(x);
-                ship.setStartY(y);
-                ship.setDirection(dir);
-                boardService.placeShip(board, ship);
-            } catch (Exception ignored) {}
+        if (shipsJson == null || shipsJson.isEmpty()) {
+            boardService.autoPlace(board);
+            return;
         }
-        if (board.getShips().size() < 5) boardService.autoPlace(board);
+
+        try {
+            Gson gson = new Gson();
+            Ship[] ships = gson.fromJson(shipsJson, Ship[].class);
+
+            for (Ship s : ships) {
+                if (s != null) {
+                    s.setId(UUID.randomUUID().toString());
+                    s.setBoardId(board.getId());
+                    boardService.placeShip(board, s);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[SetupServlet] Lỗi giải mã JSON tàu: " + e.getMessage());
+        }
+
+        if (board.getShips().size() < 5) {
+            boardService.autoPlace(board);
+        }
     }
 
     private String extractJsonValue(String json, String key) {

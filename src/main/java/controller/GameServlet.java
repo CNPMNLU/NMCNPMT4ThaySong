@@ -154,11 +154,14 @@ public class GameServlet extends HttpServlet {
                 out.print("{\"error\":\"not_your_turn\"}"); return;
             }
 
-            int x = Integer.parseInt(req.getParameter("x"));
-            int y = Integer.parseInt(req.getParameter("y"));
-
-            Board      targetBoard = "PvE".equals(mode) ? aiBoard : playerBoard;
-            ShotResult result      = gameService.fireShot(targetBoard, gs, playerId, x, y);
+            int x = parseInt(req.getParameter("x"), -1);
+            int y = parseInt(req.getParameter("y"), -1);
+            if (x < 0 || x > 9 || y < 0 || y > 9) {
+                out.print("{\"error\":\"invalid_coordinates\"}");
+                return;
+            }
+            Board targetBoard = "PvE".equals(mode) ? aiBoard : playerBoard;
+            ShotResult result = gameService.fireShot(targetBoard, gs, playerId, x, y);
 
             JsonObject response = new JsonObject();
             response.addProperty("result", result.getResult().name());
