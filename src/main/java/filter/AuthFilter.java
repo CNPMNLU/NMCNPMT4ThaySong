@@ -29,7 +29,6 @@ public class AuthFilter implements Filter {
         boolean loggedIn = session != null && session.getAttribute("playerId") != null;
 
         if (!loggedIn) {
-            // Lưu lại URL user muốn vào để sau khi login có thể redirect đúng trang
             String requestedUrl = req.getRequestURI();
             String query        = req.getQueryString();
             if (query != null) requestedUrl += "?" + query;
