@@ -7,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.UUID;
+import com.google.gson.Gson;
 
 @WebServlet("/setup")
 public class SetupServlet extends HttpServlet {

@@ -171,22 +171,24 @@ public class GameServlet extends HttpServlet {
             if (result.getResult() == ShotResult.ResultType.GAME_OVER) {
                 gs.setStatus("finished");
                 gs.setWinnerId(playerId);
-                gameService.finishGame(gs, playerId);
 
                 long duration = gs.getStartedAt() != null
-                    ? Duration.between(gs.getStartedAt(), LocalDateTime.now()).getSeconds() : 0;
+                        ? Duration.between(gs.getStartedAt(), LocalDateTime.now()).getSeconds() : 0;
                 int score = scoreService.calculateScore(gs.getTotalTurns(), (int) duration);
 
-                // Xác định tên người thắng/thua theo mode
                 String p2Display = "PvE".equals(mode) ? "AI" : p2Name;
                 saveGameRecord(gs, playerId, null, playerName, p2Display, playerName, mode, score, 0);
                 saveLeaderboard(playerId, true, score);
 
                 response.addProperty("score", score);
                 response.addProperty("winner", playerName);
+
                 session.setAttribute("lastScore", score);
                 session.setAttribute("gameWinner", playerName);
-            } else if ("PvE".equals(mode)) {
+                session.removeAttribute("roomId");
+                session.removeAttribute("gameState");
+            }
+            else if ("PvE".equals(mode)) {
                 JsonObject aiMove = doAITurn(gs, playerBoard, aiBoard, aiService,
                                               playerId, playerName, session, response);
                 if (aiMove != null) response.add("aiMove", aiMove);
