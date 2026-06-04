@@ -21,6 +21,14 @@ public class GameServlet extends HttpServlet {
     private final GameHistoryDAO historyDAO = new GameHistoryDAO();
     private final LeaderboardDAO leaderboardDAO = new LeaderboardDAO();
 
+    /**
+     * AIController được khởi tạo một lần cùng servlet.
+     * Dependencies inject thủ công — nhất quán với cách các service khác được tạo.
+     */
+    private final AIServlet aiController = new AIServlet(
+            boardService, gameService, scoreService, historyDAO, leaderboardDAO
+    );
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession session = req.getSession(false);
@@ -108,44 +116,7 @@ public class GameServlet extends HttpServlet {
 
             // PvP offline save — JS gọi sau khi game kết thúc phía client
             if ("pvp_save".equals(action)) {
-                String winnerName = req.getParameter("winner");
-                String loserName = req.getParameter("loser");
-                int shots = parseInt(req.getParameter("shots"), 0);
-                int duration = parseInt(req.getParameter("duration"), 0);
-
-                String p1Name = (String) session.getAttribute("playerName");
-                p2Name = (String) session.getAttribute("player2Name");
-                if (p1Name == null) p1Name = "Player 1";
-                if (p2Name == null) p2Name = "Người chơi 2";
-                if (winnerName == null) winnerName = p1Name;
-
-                // player1_id luôn là user đang đăng nhập; player2 không có UUID (offline)
-                GameRecord record = new GameRecord();
-                record.setId(UUID.randomUUID().toString());
-                String roomId = (String) session.getAttribute("roomId");
-                record.setRoomId(roomId != null ? roomId : UUID.randomUUID().toString());
-                record.setPlayer1Id(playerId);
-                record.setPlayer2Id(null);
-                record.setPlayer1Name(p1Name);
-                record.setPlayer2Name(p2Name);
-                record.setWinnerName(winnerName);
-                record.setMode("PvP");
-                record.setPlayer1Score(p1Name.equals(winnerName) ? 1 : 0);
-                record.setPlayer2Score(p2Name.equals(winnerName) ? 1 : 0);
-                record.setTotalShots(shots);
-                record.setDurationSeconds(duration);
-
-                try {
-                    historyDAO.insert(record);
-                    boolean p1Won = p1Name.equals(winnerName);
-                    saveLeaderboard(playerId, p1Won, p1Won ? 1 : 0);
-                    out.print("{'ok':true}");
-                    System.out.println("[GameServlet] pvp_save OK: winner=" + winnerName);
-                } catch (Exception e) {
-                    System.err.println("[GameServlet] pvp_save FAILED: " + e.getMessage());
-                    e.printStackTrace(System.err);
-                    out.print("{'error':'save_failed'}");
-                }
+                handlePvpSave(req, session, playerId, out);
                 return;
             }
 
@@ -154,9 +125,7 @@ public class GameServlet extends HttpServlet {
                 JsonObject response = new JsonObject();
                 response.addProperty("skipped", true);
                 if ("PvE".equals(mode)) {
-                    JsonObject aiMove = doAITurn(gs, aiBoard,
-                            playerId, playerName, session, response);
-                    if (aiMove != null) response.add("aiMove", aiMove);
+                    appendAIMove(response, gs, session, playerId, playerName);
                 }
                 out.print(response.toString());
                 return;
@@ -194,12 +163,13 @@ public class GameServlet extends HttpServlet {
 
                 response.addProperty("score", score);
                 response.addProperty("winner", playerName);
+                //Flag rõ ràng để frontend không cần đoán
+                response.addProperty("gameOver", true);
                 session.setAttribute("lastScore", score);
                 session.setAttribute("gameWinner", playerName);
             } else if ("PvE".equals(mode)) {
-                JsonObject aiMove = doAITurn(gs, aiBoard,
-                        playerId, playerName, session, response);
-                if (aiMove != null) response.add("aiMove", aiMove);
+                // Player chưa thắng → AI thực hiện lượt
+                appendAIMove(response, gs, session, playerId, playerName);
             }
             session.setAttribute("gameState", gs);
             out.print(response.toString());
@@ -209,54 +179,84 @@ public class GameServlet extends HttpServlet {
         }
     }
 
-    private JsonObject doAITurn(GameState gs, Board aiBoard,
-                                String playerId, String playerName,
-                                HttpSession session, JsonObject response) {
-        AIService aiService = (AIService) session.getAttribute("aiService");
-        if (aiService == null) {
-            String diff = (String) session.getAttribute("difficulty");
-            aiService = new AIService(diff != null ? diff : "Easy");
+    /**
+     * Gọi AIController.executeTurn() và gắn kết quả vào JSON response.
+     *
+     * Đây là nơi duy nhất trong GameServlet biết về AIController —
+     * tất cả logic AI đã nằm trong AIController.
+     *
+     * aiMove object có thêm field "gameOver": true khi AI thắng.
+     */
+    private void appendAIMove(JsonObject response,
+                              GameState gs,
+                              HttpSession session,
+                              String playerId,
+                              String playerName) {
+        AITurnResult aiResult = aiController.executeTurn(gs, session, playerId, playerName);
+
+
+        if (aiResult == null) {
+            //target null — báo frontend biết AI không bắn được
+            response.addProperty("aiError", "no_target");
+            return;
         }
-
-        Board playerBoard = boardService.getBoardByRoomAndOwner(session, gs.getRoomId(), playerId);
-
-        gs.setCurrentTurnId("AI_PLAYER");
-
-        int[] target = aiService.selectTarget(playerBoard);
-        if (target == null) return null;
-
-        ShotResult aiResult = gameService.fireShot(playerBoard, gs, "AI_PLAYER", target[0], target[1]);
-        boolean hit = aiResult.getResult() == ShotResult.ResultType.HIT
-                || aiResult.getResult() == ShotResult.ResultType.SUNK
-                || aiResult.getResult() == ShotResult.ResultType.GAME_OVER;
-        boolean sunk = aiResult.getResult() == ShotResult.ResultType.SUNK
-                || aiResult.getResult() == ShotResult.ResultType.GAME_OVER;
-        aiService.notifyResult(target[0], target[1], hit, sunk, playerBoard);
-
-        session.setAttribute("aiService", aiService);
-        session.setAttribute("board_" + playerId, playerBoard);
 
         JsonObject aiMove = new JsonObject();
-        aiMove.addProperty("x", target[0]);
-        aiMove.addProperty("y", target[1]);
-        aiMove.addProperty("result", aiResult.getResult().name());
+        aiMove.addProperty("x",      aiResult.x);
+        aiMove.addProperty("y",      aiResult.y);
+        aiMove.addProperty("result", aiResult.resultType.name());
 
-        if (aiResult.getResult() == ShotResult.ResultType.GAME_OVER) {
-            gs.setStatus("finished");
-            gs.setWinnerId("AI_PLAYER");
-            gameService.finishGame(gs, "AI_PLAYER");
-
-            // AI thắng: player1=người chơi, player2/winner=AI
-            saveGameRecord(gs, playerId, null, playerName, "AI", "AI", gs.getMode(), 0, 0);
-            saveLeaderboard(playerId, false, 0);
-
+        if (aiResult.aiWon) {
+            //Flag rõ ràng — frontend không phải parse result string
+            aiMove.addProperty("gameOver", true);
+            aiMove.addProperty("aiWon", true);
             response.addProperty("aiWon", true);
-            session.setAttribute("gameWinner", "AI");
-            session.setAttribute("lastScore", 0);
-        } else {
-            gs.setCurrentTurnId(playerId);
         }
-        return aiMove;
+
+        response.add("aiMove", aiMove);
+        session.setAttribute("gameState", gs);
+    }
+
+    private void handlePvpSave(HttpServletRequest req,
+                               HttpSession session,
+                               String playerId,
+                               PrintWriter out) {
+        try {
+            String winnerName = req.getParameter("winner");
+//            String loserName  = req.getParameter("loser");
+            int shots         = parseInt(req.getParameter("shots"), 0);
+            int duration      = parseInt(req.getParameter("duration"), 0);
+
+            String p1Name = (String) session.getAttribute("playerName");
+            String p2Name = (String) session.getAttribute("player2Name");
+            if (p1Name == null) p1Name = "Player 1";
+            if (p2Name == null) p2Name = "Người chơi 2";
+            if (winnerName == null) winnerName = p1Name;
+
+            GameRecord record = new GameRecord();
+            record.setId(UUID.randomUUID().toString());
+            String roomId = (String) session.getAttribute("roomId");
+            record.setRoomId(roomId != null ? roomId : UUID.randomUUID().toString());
+            record.setPlayer1Id(playerId);
+            record.setPlayer2Id(null);
+            record.setPlayer1Name(p1Name);
+            record.setPlayer2Name(p2Name);
+            record.setWinnerName(winnerName);
+            record.setMode("PvP");
+            record.setPlayer1Score(p1Name.equals(winnerName) ? 1 : 0);
+            record.setPlayer2Score(p2Name.equals(winnerName) ? 1 : 0);
+            record.setTotalShots(shots);
+            record.setDurationSeconds(duration);
+
+            historyDAO.insert(record);
+            boolean p1Won = p1Name.equals(winnerName);
+            saveLeaderboard(playerId, p1Won, p1Won ? 1 : 0);
+            //Dùng double quotes thay vì single quotes
+            out.print("{\"ok\":true}");
+        } catch (Exception e) {
+            System.err.println("[GameServlet] pvp_save FAILED: " + e.getMessage());
+            out.print("{\"error\":\"save_failed\"}");
+        }
     }
 
     /**

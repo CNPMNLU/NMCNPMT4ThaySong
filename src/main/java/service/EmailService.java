@@ -2,6 +2,8 @@ package service;
 
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
+
+import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 public class EmailService {
@@ -12,7 +14,7 @@ public class EmailService {
     private static final String SMTP_PASS = System.getenv("MAIL_PASS");
     private static final String FROM_NAME = "Battleship Game";
 
-    public void sendVerificationEmail(String toEmail, String verifyUrl) throws MessagingException {
+    public void sendVerificationEmail(String toEmail, String verifyUrl) throws MessagingException, UnsupportedEncodingException {
         String subject = "[Battleship] Xác thực địa chỉ email của bạn";
         String body = "<div style='font-family:sans-serif;max-width:480px;margin:auto'>"
             + "<h2 style='color:#3b82f6'>⚓ Battleship</h2>"
@@ -26,7 +28,7 @@ public class EmailService {
         send(toEmail, subject, body);
     }
 
-    private void send(String to, String subject, String htmlBody) throws MessagingException {
+    private void send(String to, String subject, String htmlBody) throws MessagingException, UnsupportedEncodingException {
         Properties props = new Properties();
         props.put("mail.smtp.host", SMTP_HOST);
         props.put("mail.smtp.port", SMTP_PORT);

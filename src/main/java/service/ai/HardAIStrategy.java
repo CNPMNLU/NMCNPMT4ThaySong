@@ -50,14 +50,14 @@ public class HardAIStrategy implements AIStrategy {
             return huntState.poll(); // pha HUNT hoặc TARGET
         }
 
-        return randomUnhit(cells); // pha RANDOM
+        return randomUnit(cells); // pha RANDOM
     }
 
     /**
      * Chọn ngẫu nhiên một ô chưa bắn trên board.
      * Trả về null nếu toàn bộ board đã được bắn (board full — không bình thường).
      */
-    private int[] randomUnhit(Cell[][] cells) {
+    private int[] randomUnit(Cell[][] cells) {
         List<int[]> available = new ArrayList<>();
         for (int x = 0; x < cells.length; x++)
             for (int y = 0; y < cells[x].length; y++)
