@@ -560,3 +560,393 @@ function doAutoPlace() {
         }
     });
 }
+
+let historyState = {
+    currentPage: 1,
+    pageSize: 10,
+    currentFilter: { mode: 'all', result: 'all' },
+    allMatches: []
+};
+
+function initHistoryPage() {
+    setupHistoryEventListeners();
+    loadHistoryData();
+}
+
+function setupHistoryEventListeners() {
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            historyState.currentFilter.mode = this.dataset.mode;
+            historyState.currentPage = 1;
+            loadHistoryData();
+        });
+    });
+
+    document.querySelectorAll('[data-result]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-result]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            historyState.currentFilter.result = this.dataset.result;
+            historyState.currentPage = 1;
+            loadHistoryData();
+        });
+    });
+
+    document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            const viewId = this.dataset.view + '-view';
+            const viewEl = document.getElementById(viewId);
+            if (viewEl) {
+                viewEl.classList.add('active');
+                if (this.dataset.view === 'chart') {
+                    renderHistoryCharts();
+                }
+            }
+        });
+    });
+
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (historyState.currentPage > 1) {
+                historyState.currentPage--;
+                loadHistoryData();
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            historyState.currentPage++;
+            loadHistoryData();
+        });
+    }
+}
+
+async function loadHistoryData() {
+    const container = document.querySelector('.matches-container');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading">⏳ Đang tải lịch sử...</div>';
+
+    try {
+        const params = new URLSearchParams({
+            page: historyState.currentPage,
+            mode: historyState.currentFilter.mode,
+            result: historyState.currentFilter.result
+        });
+
+        const response = await fetch(`${contextPath}/api/history?${params}`);
+        const data = await response.json();
+
+        historyState.allMatches = data.matches || [];
+        renderHistoryMatches(historyState.allMatches);
+        updateHistoryStats();
+        updateHistoryPagination(data.totalPages || 1);
+    } catch (error) {
+        console.error('Error loading history:', error);
+        container.innerHTML = '<div class="empty-state"> Lỗi tải dữ liệu</div>';
+    }
+}
+
+function renderHistoryMatches(matches) {
+    const container = document.querySelector('.matches-container');
+    if (!container) return;
+
+    if (matches.length === 0) {
+        container.innerHTML = '<div class="empty-state">🎮 Chưa có trận đấu nào</div>';
+        return;
+    }
+
+    container.innerHTML = matches.map(match => `
+        <div class="match-card ${match.won ? 'won' : 'lost'}" onclick="showHistoryMatchDetail('${match.id}')">
+            <div class="match-result">${match.won ? '' : ''}</div>
+            <div class="match-info">
+                <div class="match-opponent">vs ${match.opponent}</div>
+                <div class="match-meta">
+                    <span class="badge ${match.mode === 'PvE' ? 'badge-pve' : 'badge-pvp'}">${match.mode}</span>
+                    <span>${formatHistoryDate(match.date)}</span>
+                </div>
+            </div>
+            <div class="badge-result">
+                <div class="badge ${match.won ? 'badge-win' : 'badge-loss'}">
+                    ${match.won ? '✓ Thắng' : '✗ Thua'}
+                </div>
+            </div>
+            <div class="match-score">${match.score}</div>
+            <div class="match-actions">
+                <button class="btn-small" onclick="event.stopPropagation(); viewHistoryReplay('${match.id}')">▶ Xem lại</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateHistoryStats() {
+    const stats = calculateHistoryStats(historyState.allMatches);
+
+    const totalEl = document.querySelector('.stat-total .stat-value');
+    const winsEl = document.querySelector('.stat-wins .stat-value');
+    const lossesEl = document.querySelector('.stat-losses .stat-value');
+    const winrateEl = document.querySelector('.stat-winrate .stat-value');
+
+    if (totalEl) totalEl.textContent = stats.total;
+    if (winsEl) winsEl.textContent = stats.wins;
+    if (lossesEl) lossesEl.textContent = stats.losses;
+    if (winrateEl) winrateEl.textContent = stats.winRate.toFixed(1) + '%';
+}
+
+function calculateHistoryStats(matches) {
+    const total = matches.length;
+    const wins = matches.filter(m => m.won).length;
+    const losses = total - wins;
+    const winRate = total > 0 ? (wins / total) * 100 : 0;
+
+    return { total, wins, losses, winRate };
+}
+
+function updateHistoryPagination(totalPages) {
+    const currentPageEl = document.getElementById('current-page');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+
+    if (currentPageEl) currentPageEl.textContent = historyState.currentPage;
+    if (prevBtn) prevBtn.disabled = historyState.currentPage === 1;
+    if (nextBtn) nextBtn.disabled = historyState.currentPage >= totalPages;
+}
+
+function showHistoryMatchDetail(matchId) {
+    const modal = document.getElementById('matchModal');
+    if (!modal) return;
+
+    const modalBody = document.getElementById('modalBody');
+    if (modalBody) {
+        modalBody.innerHTML = '<div class="loading">⏳ Đang tải chi tiết...</div>';
+    }
+
+    modal.classList.add('show');
+
+    fetch(`${contextPath}/api/match/${matchId}`)
+        .then(r => r.json())
+        .then(match => {
+            if (modalBody) {
+                modalBody.innerHTML = `
+                    <h2>Chi Tiết Trận Đấu</h2>
+                    <div style="margin-top: 20px;">
+                        <div style="margin-bottom: 15px;">
+                            <span style="color: var(--text-muted);">Đối thủ:</span>
+                            <strong>${match.opponent}</strong>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <span style="color: var(--text-muted);">Chế độ:</span>
+                            <strong>${match.mode}</strong>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <span style="color: var(--text-muted);">Kết quả:</span>
+                            <strong>${match.won ? '✅ Thắng' : '❌ Thua'}</strong>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <span style="color: var(--text-muted);">Điểm:</span>
+                            <strong>${match.score}</strong>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <span style="color: var(--text-muted);">Thời gian:</span>
+                            <strong>${match.duration}</strong>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <span style="color: var(--text-muted);">Số lượt:</span>
+                            <strong>${match.shots}</strong>
+                        </div>
+                    </div>
+                `;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            if (modalBody) {
+                modalBody.innerHTML = '<div style="color: var(--danger);">❌ Lỗi tải chi tiết</div>';
+            }
+        });
+}
+
+function viewHistoryReplay(matchId) {
+    alert('Tính năng xem lại sẽ sớm được cập nhật!');
+}
+
+function renderHistoryCharts() {
+    const stats = calculateHistoryStats(historyState.allMatches);
+
+    const ctx1 = document.getElementById('resultChart');
+    if (ctx1 && typeof Chart !== 'undefined') {
+        try {
+
+        } catch(e) {
+            console.warn('Chart rendering failed:', e);
+        }
+    }
+}
+
+function formatHistoryDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+let leaderboardState = {
+    leaderboardData: [],
+    currentUser: null
+};
+
+function initLeaderboardPage() {
+    loadLeaderboardData();
+    setupLeaderboardEventListeners();
+}
+
+function setupLeaderboardEventListeners() {
+    document.querySelectorAll('.sort-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.sort-option').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            loadLeaderboardData();
+        });
+    });
+
+    document.querySelectorAll('.time-range').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.time-range').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            loadLeaderboardData();
+        });
+    });
+}
+
+async function loadLeaderboardData() {
+    const tbody = document.querySelector('.leaderboard-table tbody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="loading">⏳ Đang tải bảng xếp hạng...</div></td></tr>';
+    }
+
+    try {
+        const response = await fetch(`${contextPath}/api/leaderboard?limit=100`);
+        const data = await response.json();
+
+        leaderboardState.leaderboardData = data.entries || [];
+        leaderboardState.currentUser = data.currentUser;
+
+        renderLeaderboardTable();
+        renderTopPlayers();
+        displayUserPosition();
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--danger);">❌ Lỗi tải dữ liệu</td></tr>';
+        }
+    }
+}
+
+function renderLeaderboardTable() {
+    const tbody = document.querySelector('.leaderboard-table tbody');
+    if (!tbody) return;
+
+    if (leaderboardState.leaderboardData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">🏆 Chưa có dữ liệu xếp hạng</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = leaderboardState.leaderboardData.map((entry, index) => `
+        <tr class="${leaderboardState.currentUser && entry.userId === leaderboardState.currentUser.id ? 'highlight' : ''}">
+            <td class="rank-cell">
+                ${entry.rank <= 3 ? `<span class="rank-badge top-3">${['🥇', '🥈', '🥉'][entry.rank-1]}</span>` : `<span class="rank-badge">#${entry.rank}</span>`}
+            </td>
+            <td>
+                <div class="player-info">
+                    <span class="player-name ${leaderboardState.currentUser && entry.userId === leaderboardState.currentUser.id ? 'current-user' : ''}">
+                        ${entry.username}
+                        ${leaderboardState.currentUser && entry.userId === leaderboardState.currentUser.id ? ' (Bạn)' : ''}
+                    </span>
+                    <span class="level-badge">Lv ${entry.level}</span>
+                </div>
+            </td>
+            <td class="stat-wins">${entry.totalWins}</td>
+            <td class="stat-losses">${entry.totalLosses}</td>
+            <td>${entry.totalGames}</td>
+            <td class="stat-winrate">${entry.winRate.toFixed(1)}%</td>
+            <td class="stat-elo">${entry.eloRating}</td>
+            <td>
+                <span class="trend-indicator trend-${entry.trend}">
+                    ${entry.trend === 'up' ? '📈' : entry.trend === 'down' ? '📉' : '➡️'}
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderTopPlayers() {
+    const topPlayers = leaderboardState.leaderboardData.slice(0, 3);
+    const container = document.querySelector('.top-players');
+
+    if (!container) return;
+
+    container.innerHTML = topPlayers.map((player, index) => `
+        <div class="rank-card rank-${index + 1}">
+            <div class="rank-medal">${['🥇', '🥈', '🥉'][index]}</div>
+            <div class="rank-name">${player.username}</div>
+            <div class="rank-stats">
+                <div>Lv ${player.level}</div>
+                <div>⭐ ${player.eloRating} ELO</div>
+                <div>${player.totalWins}W - ${player.totalLosses}L</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function displayUserPosition() {
+    if (!leaderboardState.currentUser) return;
+
+    const userEntry = leaderboardState.leaderboardData.find(e => e.userId === leaderboardState.currentUser.id);
+    const card = document.querySelector('.user-position-card');
+
+    if (card && userEntry) {
+        card.innerHTML = `
+            <div class="user-position-info">
+                <div class="position-number">#${userEntry.rank}</div>
+                <div class="position-details">
+                    <div class="position-label">Xếp hạng của bạn</div>
+                    <div class="position-value">${userEntry.username}</div>
+                    <div class="position-label">⭐ ${userEntry.eloRating} ELO | Lv ${userEntry.level}</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('matchModal');
+    const closeBtn = document.querySelector('.modal-close');
+
+    if (closeBtn && modal) {
+        closeBtn.onclick = () => {
+            modal.classList.remove('show');
+        };
+    }
+
+    if (modal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.classList.remove('show');
+            }
+        });
+    }
+});
