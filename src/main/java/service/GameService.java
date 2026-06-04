@@ -1,6 +1,7 @@
 package service;
 
 import model.*;
+
 import java.util.*;
 
 public class GameService {
@@ -11,7 +12,8 @@ public class GameService {
         if (cells[x][y].isHit()) {
             ShotResult r = new ShotResult();
             r.setResult(ShotResult.ResultType.MISS);
-            r.setX(x); r.setY(y);
+            r.setX(x);
+            r.setY(y);
             return r;
         }
 
@@ -22,7 +24,8 @@ public class GameService {
         result.setGameStateId(gameState.getId());
         result.setShooterId(shooterId);
         result.setTargetBoardId(targetBoard.getId());
-        result.setX(x); result.setY(y);
+        result.setX(x);
+        result.setY(y);
         result.setTurnNumber(gameState.getTotalTurns() + 1);
 
         if (cells[x][y].isHasShip()) {
