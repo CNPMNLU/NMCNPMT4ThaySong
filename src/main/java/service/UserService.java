@@ -19,35 +19,34 @@ public class UserService {
         if (username == null || username.trim().length() < 3)
             throw new IllegalArgumentException("Username phải ít nhất 3 ký tự");
         if (password == null || password.length() < 6)
-            throw new IllegalArgumentException("Password phải ít nhất 6 ký tự");
+            throw new IllegalArgumentException("Mật khẩu phải ít nhất 6 ký tự");
         if (email == null || email.trim().isEmpty())
-            throw new IllegalArgumentException("Email là bắt buộc để xác thực tài khoản");
+            throw new IllegalArgumentException("Email là bắt buộc");
         if (!EMAIL_PATTERN.matcher(email.trim()).matches())
             throw new IllegalArgumentException("Email không đúng định dạng");
         if (userDAO.findByUsername(username.trim()) != null)
             throw new IllegalArgumentException("Username đã tồn tại");
+        if (userDAO.findByEmail(email.trim()) != null)
+            throw new IllegalArgumentException("Email đã được sử dụng");
 
         String token = generateToken();
-
         Player p = new Player();
         p.setId(UUID.randomUUID().toString());
         p.setUsername(username.trim());
         p.setPasswordHash(hashPassword(password));
         p.setEmail(email.trim());
-        p.setEmailVerified(false);
         p.setVerifyToken(token);
         userDAO.insert(p);
 
-        String verifyUrl = baseUrl + "/verify-email?token=" + token;
-        emailService.sendVerificationEmail(email.trim(), verifyUrl);
-
+        emailService.sendVerificationEmail(email.trim(), baseUrl + "/verify-email?token=" + token);
         return p;
     }
 
     public Player authenticate(String username, String password) throws Exception {
         Player p = userDAO.findByUsername(username);
-        if (p == null) throw new IllegalArgumentException("Thông tin đăng nhập không chính xác");
-        if (!p.getPasswordHash().equals(hashPassword(password)))
+        if (p == null)
+            throw new IllegalArgumentException("Thông tin đăng nhập không chính xác");
+        if (p.getPasswordHash() == null || !p.getPasswordHash().equals(hashPassword(password)))
             throw new IllegalArgumentException("Thông tin đăng nhập không chính xác");
         if (!p.isEmailVerified())
             throw new IllegalArgumentException("EMAIL_NOT_VERIFIED:" + p.getId());
@@ -61,8 +60,7 @@ public class UserService {
         if (p.isEmailVerified()) throw new IllegalArgumentException("Email đã được xác thực");
         String token = generateToken();
         userDAO.updateVerifyToken(userId, token);
-        String verifyUrl = baseUrl + "/verify-email?token=" + token;
-        emailService.sendVerificationEmail(p.getEmail(), verifyUrl);
+        emailService.sendVerificationEmail(p.getEmail(), baseUrl + "/verify-email?token=" + token);
     }
 
     public static String hashPassword(String password) {
@@ -75,9 +73,9 @@ public class UserService {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
-    private String generateToken() {
-        byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    public static String generateToken() {
+        byte[] b = new byte[32];
+        new SecureRandom().nextBytes(b);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(b);
     }
 }

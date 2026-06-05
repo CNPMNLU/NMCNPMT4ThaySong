@@ -13,8 +13,8 @@ public class RegisterServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        if (session != null && session.getAttribute("playerId") != null) {
+        HttpSession s = req.getSession(false);
+        if (s != null && s.getAttribute("playerId") != null) {
             resp.sendRedirect(req.getContextPath() + "/setup"); return;
         }
         req.getRequestDispatcher("/register.jsp").forward(req, resp);
@@ -29,33 +29,33 @@ public class RegisterServlet extends HttpServlet {
         String email           = req.getParameter("email");
 
         if (username == null || username.trim().isEmpty()) {
-            forwardError(req, resp, "Vui lòng nhập tên đăng nhập", username, email); return;
+            error(req, resp, "Vui lòng nhập tên đăng nhập", username, email); return;
+        }
+        if (email == null || email.trim().isEmpty()) {
+            error(req, resp, "Vui lòng nhập email", username, email); return;
         }
         if (password == null || password.isEmpty()) {
-            forwardError(req, resp, "Vui lòng nhập mật khẩu", username, email); return;
+            error(req, resp, "Vui lòng nhập mật khẩu", username, email); return;
         }
-        if (confirmPassword == null || confirmPassword.isEmpty()) {
-            forwardError(req, resp, "Vui lòng xác nhận mật khẩu", username, email); return;
-        }
-        if (!password.equals(confirmPassword)) {
-            forwardError(req, resp, "Mật khẩu xác nhận không khớp", username, email); return;
+        if (confirmPassword == null || !password.equals(confirmPassword)) {
+            error(req, resp, "Mật khẩu xác nhận không khớp", username, email); return;
         }
 
         try {
             String baseUrl = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
-            Player player = userService.register(username, password, email, baseUrl);
-            req.getSession(true).setAttribute("pendingVerifyId", player.getId());
-            resp.sendRedirect(req.getContextPath() + "/pending-verification");
+            Player p = userService.register(username, password, email, baseUrl);
+            req.getSession(true).setAttribute("pendingVerifyId", p.getId());
+            resp.sendRedirect(req.getContextPath() + "/pending-verification.jsp");
         } catch (Exception e) {
-            forwardError(req, resp, e.getMessage() != null ? e.getMessage() : "Đăng ký thất bại", username, email);
+            error(req, resp, e.getMessage() != null ? e.getMessage() : "Đăng ký thất bại", username, email);
         }
     }
 
-    private void forwardError(HttpServletRequest req, HttpServletResponse resp, String msg, String username, String email)
+    private void error(HttpServletRequest req, HttpServletResponse resp, String msg, String u, String e)
             throws ServletException, IOException {
         req.setAttribute("error", msg);
-        if (username != null) req.setAttribute("savedUsername", username.trim());
-        if (email    != null) req.setAttribute("savedEmail", email.trim());
+        if (u != null) req.setAttribute("savedUsername", u.trim());
+        if (e != null) req.setAttribute("savedEmail", e.trim());
         req.getRequestDispatcher("/register.jsp").forward(req, resp);
     }
 }
