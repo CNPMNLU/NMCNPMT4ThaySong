@@ -19,12 +19,10 @@ public class ResendVerifyServlet extends HttpServlet {
         try {
             String baseUrl = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
             userService.resendVerification(userId.trim(), baseUrl);
-            req.setAttribute("resendSuccess", true);
             req.setAttribute("verifyStatus", "resent");
-            req.getRequestDispatcher("/verify-email.jsp").forward(req, resp);
         } catch (Exception e) {
             req.setAttribute("verifyStatus", "error");
-            req.getRequestDispatcher("/verify-email.jsp").forward(req, resp);
         }
+        req.getRequestDispatcher("/verify-email.jsp").forward(req, resp);
     }
 }

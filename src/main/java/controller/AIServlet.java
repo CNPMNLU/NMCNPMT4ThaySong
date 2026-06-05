@@ -105,9 +105,18 @@ public class AIServlet {
         // ------------------------------------------------------------------
         // 2. Lấy playerBoard — AI bắn vào board của người chơi
         // ------------------------------------------------------------------
-        Board playerBoard = boardService.getBoardByRoomAndOwner(session, gs.getRoomId(), playerId);
+        // FIX BUG #1 — Lấy playerBoard trực tiếp từ session key cố định,
+        // KHÔNG qua getBoardByRoomAndOwner() vì method đó có thể trả về
+        // bản sao cũ chưa được update isHit từ các lượt AI trước.
+        // playerBoard được AIServlet.saveToSession() lưu vào "board_<playerId>"
+        // sau mỗi lượt, nên đây là bản mới nhất đã có đầy đủ isHit.
+        Board playerBoard = (Board) session.getAttribute("board_" + playerId);
         if (playerBoard == null) {
-            log.warning("[AIController] playerBoard null cho playerId=" + playerId);
+            // Fallback: lần đầu tiên AI bắn, board chưa có key riêng
+            playerBoard = boardService.getBoardByRoomAndOwner(session, gs.getRoomId(), playerId);
+        }
+        if (playerBoard == null) {
+            log.warning("[AICServlet] playerBoard null cho playerId=" + playerId);
             return null;
         }
 
@@ -142,26 +151,32 @@ public class AIServlet {
         // ------------------------------------------------------------------
         // 6. Guard ALREADY_HIT — không gọi notifyResult khi bắn trùng
         //    [Lỗi #3] Tránh Hard AI enqueue ô đã bắn vào huntQueue
-        //    Lưu ý: ALREADY_HIT sẽ được thêm trong COMMIT-03;
         //    hiện tại guard theo isHit() trên cell trước khi fireShot
         //    — cell đã được mark isHit bởi fireShot nên dùng resultType MISS
         //    từ ô đã bắn để nhận biết.
         // ------------------------------------------------------------------
-        boolean isAlreadyHit = (resultType == ShotResult.ResultType.MISS
-                && playerBoard.getCells()[tx][ty].isHit()
-                && !playerBoard.getCells()[tx][ty].isHasShip());
-        // Khi COMMIT-03 thêm ALREADY_HIT vào enum, thay điều kiện trên bằng:
-        // boolean isAlreadyHit = (resultType == ShotResult.ResultType.ALREADY_HIT);
+        // FIX BUG #2 — Tính hit/sunk trực tiếp từ resultType của ShotResult,
+        // KHÔNG gọi aiResult.isHit() / aiResult.isSunk() vì ShotResult không
+        // có 2 method đó (chỉ AITurnResult mới có) → gây CompilationError hoặc
+        // method bị nhầm → notifyResult() không bao giờ nhận hit=true → huntQueue
+        // không được cập nhật → Hard AI luôn random.
+        boolean hit  = resultType == ShotResult.ResultType.HIT
+                || resultType == ShotResult.ResultType.SUNK
+                || resultType == ShotResult.ResultType.GAME_OVER;
+        boolean sunk = resultType == ShotResult.ResultType.SUNK
+                || resultType == ShotResult.ResultType.GAME_OVER;
 
-        if (!isAlreadyHit) {
-            // ------------------------------------------------------------------
-            // 7. Thông báo kết quả cho strategy — polymorphic, không downcast
-            //    [Lỗi #2 đã sửa ở COMMIT-01]
-            // ------------------------------------------------------------------
-            aiService.notifyResult(tx, ty, aiResult.isHit(), aiResult.isSunk(), playerBoard);
-        } else {
-            log.warning("[AIController] AI bắn ô đã bắn (" + tx + "," + ty + ") — bỏ qua notifyResult");
-        }
+        // 5. Thông báo kết quả cho strategy (polymorphic — COMMIT-01)
+        // Guard: chỉ gọi khi không phải ô đã bắn (MISS thật sự, không phải MISS giả)
+        // Vì fireShot() trả MISS cả khi bắn trúng ô đã bắn (chưa có ALREADY_HIT),
+        // cần kiểm tra thêm: nếu MISS mà cell.hasShip=false thì là miss thật,
+        // nếu MISS mà cell đã isHit từ trước khi gọi fireShot thì là bắn trùng.
+        // Cách đơn giản: board đã được mutation bởi fireShot → cell luôn isHit sau đó.
+        // Ta không thể phân biệt sau khi fireShot. Dùng cờ bắn trùng phát hiện trước:
+        // selectTarget() đã đảm bảo chỉ trả ô chưa hit (pruneHitCells + randomUnhit
+        // đều filter !isHit) → không thể bắn trùng nếu strategy hoạt động đúng.
+        // Chỉ cần gọi notifyResult() bình thường.
+        aiService.notifyResult(tx, ty, hit, sunk, playerBoard);
 
         // ------------------------------------------------------------------
         // 8. Xử lý kết thúc game nếu AI thắng

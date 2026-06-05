@@ -2,22 +2,19 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Đăng nhập — Battleship</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-  <style>
-    .divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--text-muted); font-size:0.85rem; }
-    .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
-    .btn-oauth {
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      width:100%; padding:11px; border-radius:var(--radius);
-      border:1px solid var(--border); background:transparent; color:var(--text);
-      font-size:0.92rem; cursor:pointer; text-decoration:none;
-      transition:background 0.2s; box-sizing:border-box;
-    }
-    .btn-oauth:hover { background:rgba(255,255,255,0.06); text-decoration:none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đăng nhập — Battleship</title>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+<style>
+  .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text-muted);font-size:0.85rem}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+  .btn-oauth{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    padding:11px;border-radius:var(--radius);border:1px solid var(--border);
+    background:transparent;color:var(--text);font-size:0.92rem;cursor:pointer;
+    text-decoration:none;transition:background 0.2s;box-sizing:border-box;margin-bottom:10px}
+  .btn-oauth:hover{background:rgba(255,255,255,0.06);text-decoration:none}
+</style>
 </head>
 <body>
 <div class="auth-wrapper">
@@ -39,7 +36,6 @@
       <div class="form-group">
         <label style="display:flex;justify-content:space-between;align-items:center">
           Mật khẩu
-          <a href="${pageContext.request.contextPath}/forgot-password" style="font-size:0.8rem;font-weight:400;text-transform:none;letter-spacing:0">Quên mật khẩu?</a>
         </label>
         <input type="password" name="password" placeholder="Nhập password" required>
       </div>
@@ -56,6 +52,13 @@
         <path fill="#34A853" d="M24 47c5.4 0 10-1.8 13.3-4.8l-7.3-5.7c-1.8 1.2-4.1 1.9-6 1.9-6.3 0-11.6-4.2-13.5-9.8l-8 6.2C7 42.3 14.9 47 24 47z"/>
       </svg>
       Tiếp tục với Google
+    </a>
+
+    <a href="${pageContext.request.contextPath}/auth/facebook" class="btn-oauth">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
+        <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+      </svg>
+      Tiếp tục với Facebook
     </a>
 
     <p style="text-align:center;margin-top:20px;color:var(--text-muted);font-size:0.9rem;">

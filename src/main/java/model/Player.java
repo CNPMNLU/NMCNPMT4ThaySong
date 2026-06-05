@@ -8,11 +8,12 @@ public class Player {
     private String passwordHash;
     private String email;
     private boolean emailVerified;
-    private String googleId;
     private String verifyToken;
     private LocalDateTime verifySentAt;
     private String resetToken;
     private LocalDateTime resetTokenExpiry;
+    private String googleId;
+    private String facebookId;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
 
@@ -33,9 +34,6 @@ public class Player {
     public boolean isEmailVerified() { return emailVerified; }
     public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
-    public String getGoogleId() { return googleId; }
-    public void setGoogleId(String googleId) { this.googleId = googleId; }
-
     public String getVerifyToken() { return verifyToken; }
     public void setVerifyToken(String verifyToken) { this.verifyToken = verifyToken; }
 
@@ -46,7 +44,13 @@ public class Player {
     public void setResetToken(String resetToken) { this.resetToken = resetToken; }
 
     public LocalDateTime getResetTokenExpiry() { return resetTokenExpiry; }
-    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; }
+    public void setResetTokenExpiry(LocalDateTime v) { this.resetTokenExpiry = v; }
+
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
+
+    public String getFacebookId() { return facebookId; }
+    public void setFacebookId(String facebookId) { this.facebookId = facebookId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
