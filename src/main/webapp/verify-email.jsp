@@ -14,44 +14,40 @@
       String status = (String) request.getAttribute("verifyStatus");
       if (status == null) status = "";
     %>
-
     <% if ("success".equals(status)) { %>
       <div style="font-size:3.5rem;margin-bottom:12px">✅</div>
-      <h1 style="color:var(--success)">Xác thực thành công!</h1>
-      <p class="subtitle">Email của bạn đã được xác thực</p>
-      <a href="${pageContext.request.contextPath}/login" class="btn btn-primary" style="margin-top:12px">Đăng nhập ngay</a>
+      <h1>Xác thực thành công!</h1>
+      <p class="subtitle">Email đã được xác thực. Bạn có thể đăng nhập ngay.</p>
+      <a href="${pageContext.request.contextPath}/login" class="btn btn-primary" style="margin-top:16px;display:block">Đăng nhập</a>
 
     <% } else if ("already".equals(status)) { %>
       <div style="font-size:3.5rem;margin-bottom:12px">✅</div>
-      <h1>Email đã được xác thực</h1>
-      <p class="subtitle">Tài khoản của bạn đã hoạt động</p>
-      <a href="${pageContext.request.contextPath}/login" class="btn btn-primary" style="margin-top:12px">Đăng nhập</a>
+      <h1>Email đã xác thực</h1>
+      <p class="subtitle">Tài khoản đã hoạt động</p>
+      <a href="${pageContext.request.contextPath}/login" class="btn btn-primary" style="margin-top:16px;display:block">Đăng nhập</a>
 
     <% } else if ("expired".equals(status)) { %>
       <div style="font-size:3.5rem;margin-bottom:12px">⏰</div>
       <h1>Link đã hết hạn</h1>
-      <p class="subtitle">Link xác thực chỉ có hiệu lực trong 24 giờ</p>
-      <%
-        String expiredUserId = (String) request.getAttribute("expiredUserId");
-        if (expiredUserId != null) {
-      %>
+      <p class="subtitle">Link xác thực chỉ có hiệu lực 24 giờ</p>
+      <% String expiredId = (String) request.getAttribute("expiredUserId"); if (expiredId != null) { %>
       <form action="${pageContext.request.contextPath}/resend-verification" method="post" style="margin-top:16px">
-        <input type="hidden" name="userId" value="<%= expiredUserId %>">
-        <button type="submit" class="btn btn-primary">Gửi lại email xác thực</button>
+        <input type="hidden" name="userId" value="<%= expiredId %>">
+        <button type="submit" class="btn btn-primary" style="width:100%">Gửi lại email xác thực</button>
       </form>
       <% } %>
 
     <% } else if ("resent".equals(status)) { %>
       <div style="font-size:3.5rem;margin-bottom:12px">📧</div>
       <h1>Đã gửi lại!</h1>
-      <div class="alert alert-success">Email xác thực mới đã được gửi. Vui lòng kiểm tra hộp thư.</div>
+      <div class="alert alert-success">Email xác thực mới đã được gửi.</div>
       <a href="${pageContext.request.contextPath}/login" style="color:var(--text-muted);font-size:0.9rem">← Quay lại đăng nhập</a>
 
     <% } else { %>
       <div style="font-size:3.5rem;margin-bottom:12px">❌</div>
       <h1>Link không hợp lệ</h1>
-      <p class="subtitle">Link xác thực không tồn tại hoặc đã được sử dụng</p>
-      <a href="${pageContext.request.contextPath}/login" class="btn btn-primary" style="margin-top:12px">Về trang đăng nhập</a>
+      <p class="subtitle">Link đã được dùng hoặc không tồn tại</p>
+      <a href="${pageContext.request.contextPath}/login" class="btn btn-primary" style="margin-top:16px;display:block">Về trang đăng nhập</a>
     <% } %>
   </div>
 </div>

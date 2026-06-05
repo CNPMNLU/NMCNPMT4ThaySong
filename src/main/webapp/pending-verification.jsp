@@ -14,7 +14,7 @@
     <h1>Kiểm tra Email</h1>
     <p class="subtitle">Chúng tôi đã gửi link xác thực đến email của bạn</p>
     <div class="alert alert-success" style="text-align:left">
-      Hãy mở email và nhấn vào link xác thực. Link có hiệu lực trong <strong>24 giờ</strong>.
+      Mở email và nhấn vào link xác thực. Link có hiệu lực trong <strong>24 giờ</strong>.
     </div>
     <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:20px">
       Không thấy email? Kiểm tra thư mục <strong>Spam / Junk</strong>.
