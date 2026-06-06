@@ -1,6 +1,7 @@
 package controller;
 
 import model.*;
+import service.AIService;
 import service.BoardService;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,6 +10,22 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.UUID;
 
+/**
+ * KhoaDang: Gọi aiService.reset() khi bắt đầu game mới.
+ *
+ * Vấn đề cũ:
+ *   - SetupServlet chỉ set session.setAttribute("aiService", null)
+ *   - Khi GameServlet.doGet() tạo AIService mới, nếu session cũ vẫn còn
+ *     và AIService chưa bị null (race condition hoặc code path khác),
+ *     huntQueue của game trước bị giữ lại → Hard AI bắn tọa độ game cũ.
+ *
+ * Fix:
+ *   - Vẫn set null để GameServlet tạo mới (behavior không đổi)
+ *   - Thêm: nếu aiService còn tồn tại trong session trước khi null hóa,
+ *     gọi reset() tường minh trước — đảm bảo không rò rỉ state dù
+ *     object bị reuse bởi bất kỳ code path nào khác.
+ *   - Xóa cả board_<playerId> cũ để tránh board game trước bị dùng lại.
+ */
 @WebServlet("/setup")
 public class SetupServlet extends HttpServlet {
     private final BoardService boardService = new BoardService();
@@ -56,7 +73,28 @@ public class SetupServlet extends HttpServlet {
             }
             board.setReady(true);
 
-            // Clear old game state
+            // ------------------------------------------------------------------
+            // KhoaDang: Reset AIService trước khi xóa khỏi session.
+            //
+            // Thứ tự quan trọng:
+            //   1. Lấy ra instance cũ
+            //   2. Gọi reset() — xóa huntQueue, lastHit, huntDirection
+            //   3. Sau đó mới null hóa trong session
+            //
+            // Lý do không chỉ null hóa: nếu GameServlet giữ reference
+            // tới AIService cũ trong cùng request (hiếm nhưng có thể),
+            // reset() đảm bảo state bị xóa ngay cả trường hợp đó.
+            // ------------------------------------------------------------------
+
+            AIService existingAI = (AIService) session.getAttribute("aiService");
+            if (existingAI != null) {
+                existingAI.reset(); // Xóa huntQueue game cũ
+            }
+            // Xóa board cũ của player khỏi session — tránh board game trước
+            // bị getBoardByRoomAndOwner() trả về cho game mới
+            session.removeAttribute("board_" + playerId);
+
+            // Ghi session mới
             session.setAttribute("roomId", roomId);
             session.setAttribute("boardId", boardId);
             session.setAttribute("mode", mode);

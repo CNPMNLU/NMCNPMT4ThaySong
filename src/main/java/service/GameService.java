@@ -4,6 +4,14 @@ import model.*;
 
 import java.util.*;
 
+
+/**
+ * KhoaDang: checkSunk() và fireShot() dùng Direction enum thay String.
+ *
+ * Thay đổi:
+ *   - checkSunk(): "H".equals(direction) → direction == Direction.H
+ *   - Không còn rủi ro null/typo direction gây sunk sai
+ */
 public class GameService {
 
     public ShotResult fireShot(Board targetBoard, GameState gameState, String shooterId, int x, int y) {
@@ -55,10 +63,19 @@ public class GameService {
         return result;
     }
 
+    /**
+     * KhoaDang: Dùng Direction enum — loại bỏ String compare dễ typo.
+     *
+     * Trước: "H".equals(ship.getDirection()) — nếu direction null hoặc "h" thì
+     *        cx luôn = startX, cy luôn = startY → chỉ check ô đầu tiên → sunk sai.
+     * Sau  : ship.getDirection() == Direction.H — enum, không bao giờ null
+     *        (Ship.getDirection() fallback về H nếu chưa set).
+     */
     private boolean checkSunk(Ship ship, Cell[][] cells) {
+        Direction dir = ship.getDirection(); // enum, không null
         for (int i = 0; i < ship.getLength(); i++) {
-            int cx = "H".equals(ship.getDirection()) ? ship.getStartX() + i : ship.getStartX();
-            int cy = "V".equals(ship.getDirection()) ? ship.getStartY() + i : ship.getStartY();
+            int cx = (dir == Direction.H) ? ship.getStartX() + i : ship.getStartX();
+            int cy = (dir == Direction.V) ? ship.getStartY() + i : ship.getStartY();
             if (cells[cx][cy] == null || !cells[cx][cy].isHit()) return false;
         }
         return true;
