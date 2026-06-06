@@ -5,6 +5,7 @@ import model.*;
 import java.sql.*;
 import java.util.*;
 import dao.DBConnection;
+import model.Direction;
 
 public class BoardService {
 
@@ -33,8 +34,8 @@ public class BoardService {
         board.getShips().add(ship);
         Cell[][] cells = board.getCells();
         for (int i = 0; i < ship.getLength(); i++) {
-            int cx = ship.getDirection().equals("H") ? ship.getStartX() + i : ship.getStartX();
-            int cy = ship.getDirection().equals("V") ? ship.getStartY() + i : ship.getStartY();
+            int cx = (ship.getDirection() == Direction.H) ? ship.getStartX() + i : ship.getStartX();
+            int cy = (ship.getDirection() == Direction.V) ? ship.getStartY() + i : ship.getStartY();
             cells[cx][cy].setHasShip(true);
             cells[cx][cy].setShipId(ship.getId());
         }
@@ -43,7 +44,7 @@ public class BoardService {
 
     public boolean isValidPlacement(Board board, Ship ship) {
         int x = ship.getStartX(), y = ship.getStartY(), len = ship.getLength();
-        if ("H".equals(ship.getDirection())) {
+        if (ship.getDirection() == Direction.H) {
             if (x + len > 10) return false;
         } else {
             if (y + len > 10) return false;
@@ -51,8 +52,8 @@ public class BoardService {
         if (x < 0 || y < 0 || x >= 10 || y >= 10) return false;
         Cell[][] cells = board.getCells();
         for (int i = 0; i < len; i++) {
-            int cx = "H".equals(ship.getDirection()) ? x + i : x;
-            int cy = "V".equals(ship.getDirection()) ? y + i : y;
+            int cx = (ship.getDirection() == Direction.H) ? x + i : x;
+            int cy = (ship.getDirection() == Direction.V) ? y + i : y;
             if (cells[cx][cy].isHasShip()) return false;
         }
         return true;
@@ -73,7 +74,7 @@ public class BoardService {
             while (!placed) {
                 int x = rand.nextInt(10);
                 int y = rand.nextInt(10);
-                String dir = rand.nextBoolean() ? "H" : "V";
+                Direction dir = rand.nextBoolean() ? Direction.H : Direction.V;;
                 Ship ship = new Ship();
                 ship.setId(UUID.randomUUID().toString());
                 ship.setBoardId(board.getId());
@@ -113,7 +114,7 @@ public class BoardService {
                 sps.setInt(4, ship.getLength());
                 sps.setInt(5, ship.getStartX());
                 sps.setInt(6, ship.getStartY());
-                sps.setString(7, ship.getDirection());
+                sps.setString(7, ship.getDirectionCode());
                 sps.setBoolean(8, ship.isSunk());
                 sps.addBatch();
             }
@@ -162,7 +163,7 @@ public class BoardService {
                 ship.setLength(srs.getInt("length"));
                 ship.setStartX(srs.getInt("start_x"));
                 ship.setStartY(srs.getInt("start_y"));
-                ship.setDirection(srs.getString("direction"));
+                ship.setDirectionFromString(srs.getString("direction"));
                 ship.setSunk(srs.getBoolean("is_sunk"));
                 ships.add(ship);
             }

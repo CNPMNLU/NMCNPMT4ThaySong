@@ -143,7 +143,7 @@ public class SetupServlet extends HttpServlet {
                 ship.setLength(length);
                 ship.setStartX(x);
                 ship.setStartY(y);
-                ship.setDirection(dir);
+                ship.setDirectionFromString(dir);
                 boardService.placeShip(board, ship);
             } catch (Exception ignored) {
             }
