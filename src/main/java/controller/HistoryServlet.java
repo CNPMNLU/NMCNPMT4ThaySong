@@ -7,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/history")
 public class HistoryServlet extends HttpServlet {
@@ -57,8 +58,49 @@ public class HistoryServlet extends HttpServlet {
     private void showList(HttpServletRequest req, HttpServletResponse resp, String playerId)
             throws ServletException, IOException {
         try {
-            List<GameRecord> records = dao.findByUserId(playerId);
-            req.setAttribute("records", records);
+            // Lấy tham số từ UI
+            String pageStr = req.getParameter("page");
+            String mode = req.getParameter("mode");
+            String period = req.getParameter("period");
+
+            int page = 1;
+            if (pageStr != null && !pageStr.isBlank()) {
+                page = Math.max(1, Integer.parseInt(pageStr));
+            }
+
+            List<GameRecord> records;
+            int totalGames;
+
+            // Lọc theo mode (PvE, PvP)
+            if ("PvE".equals(mode) || "PvP".equals(mode)) {
+                records = dao.findByMode(playerId, mode);
+            }
+            // Lọc theo kỳ hạn (week, month, all)
+            else if ("week".equals(period) || "month".equals(period)) {
+                records = dao.findByDateRange(playerId, period);
+            }
+            // Mặc định: tất cả lịch sử
+            else {
+                records = dao.findByUserId(playerId);
+            }
+
+            // Tính toán phân trang
+            final int PAGE_SIZE = 10;
+            int totalPages = (int) Math.ceil((double) records.size() / PAGE_SIZE);
+            int startIdx = (page - 1) * PAGE_SIZE;
+            int endIdx = Math.min(startIdx + PAGE_SIZE, records.size());
+
+            List<GameRecord> pageRecords = records.subList(startIdx, endIdx);
+
+            // Tính thống kê toàn bộ
+            Map<String, Object> stats = dao.getPlayerStats(playerId);
+
+            req.setAttribute("records", pageRecords);
+            req.setAttribute("stats", stats);
+            req.setAttribute("currentPage", page);
+            req.setAttribute("totalPages", totalPages);
+            req.setAttribute("totalGames", records.size());
+
         } catch (Exception e) {
             e.printStackTrace();
             req.setAttribute("error", "Không thể tải lịch sử: " + e.getMessage());

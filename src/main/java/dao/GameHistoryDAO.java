@@ -4,7 +4,9 @@ import model.GameRecord;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GameHistoryDAO {
 
@@ -101,5 +103,131 @@ public class GameHistoryDAO {
         r.setPlayer1Username(rs.getString("u1name"));
         r.setPlayer2Username(rs.getString("u2name"));
         return r;
+    }
+    // FILE: src/main/java/dao/GameHistoryDAO.java
+// APPEND vào cuối class (trước dấu })
+
+    /**
+     * Lấy lịch sử theo PHÂN TRANG (Page dùng cho UI)
+     * Page bắt đầu từ 1, mỗi trang 10 trận
+     */
+    public List<GameRecord> findByUserIdPaginated(String userId, int page, int pageSize) throws SQLException {
+        int offset = (page - 1) * pageSize;
+        String sql = "SELECT gr.*, u1.username AS u1name, u2.username AS u2name " +
+                "FROM game_records gr " +
+                "JOIN users u1 ON gr.player1_id = u1.id " +
+                "LEFT JOIN users u2 ON gr.player2_id = u2.id " +
+                "WHERE gr.player1_id = ? " +
+                "ORDER BY gr.played_at DESC " +
+                "LIMIT ? OFFSET ?";
+
+        List<GameRecord> list = new ArrayList<>();
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ps.setInt(2, pageSize);
+            ps.setInt(3, offset);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(map(rs));
+        }
+        return list;
+    }
+
+    /**
+     * Đếm tổng số trận của người chơi
+     */
+    public int countByUserId(String userId) throws SQLException {
+        String sql = "SELECT COUNT(*) as cnt FROM game_records WHERE player1_id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("cnt");
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy lịch sử theo CHẾ ĐỘ (PvE hoặc PvP)
+     */
+    public List<GameRecord> findByMode(String userId, String mode) throws SQLException {
+        String sql = "SELECT gr.*, u1.username AS u1name, u2.username AS u2name " +
+                "FROM game_records gr " +
+                "JOIN users u1 ON gr.player1_id = u1.id " +
+                "LEFT JOIN users u2 ON gr.player2_id = u2.id " +
+                "WHERE gr.player1_id = ? AND gr.mode = ? " +
+                "ORDER BY gr.played_at DESC";
+
+        List<GameRecord> list = new ArrayList<>();
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ps.setString(2, mode);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(map(rs));
+        }
+        return list;
+    }
+
+    /**
+     * Lấy lịch sử theo KỲ HẠN (7 ngày gần đây, 30 ngày, v.v.)
+     */
+    public List<GameRecord> findByDateRange(String userId, String period) throws SQLException {
+        String sql;
+        if ("week".equals(period)) {
+            sql = "SELECT gr.*, u1.username AS u1name, u2.username AS u2name " +
+                    "FROM game_records gr " +
+                    "JOIN users u1 ON gr.player1_id = u1.id " +
+                    "LEFT JOIN users u2 ON gr.player2_id = u2.id " +
+                    "WHERE gr.player1_id = ? AND gr.played_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) " +
+                    "ORDER BY gr.played_at DESC";
+        } else if ("month".equals(period)) {
+            sql = "SELECT gr.*, u1.username AS u1name, u2.username AS u2name " +
+                    "FROM game_records gr " +
+                    "JOIN users u1 ON gr.player1_id = u1.id " +
+                    "LEFT JOIN users u2 ON gr.player2_id = u2.id " +
+                    "WHERE gr.player1_id = ? AND gr.played_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) " +
+                    "ORDER BY gr.played_at DESC";
+        } else {
+            return findByUserId(userId); // mặc định tất cả thời gian
+        }
+
+        List<GameRecord> list = new ArrayList<>();
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(map(rs));
+        }
+        return list;
+    }
+
+    /**
+     * Lấy các trận THẮNG/THUA để tính thống kê
+     */
+    public Map<String, Object> getPlayerStats(String userId) throws SQLException {
+        String sql = "SELECT " +
+                "  COUNT(*) as total_games, " +
+                "  SUM(CASE WHEN winner_name = (SELECT u.username FROM users u WHERE u.id = ?) THEN 1 ELSE 0 END) as wins, " +
+                "  AVG(duration_seconds) as avg_duration, " +
+                "  SUM(total_shots) as total_shots, " +
+                "  AVG(player1_score) as avg_score " +
+                "FROM game_records WHERE player1_id = ?";
+
+        Map<String, Object> stats = new HashMap<>();
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            ps.setString(2, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                stats.put("totalGames", rs.getInt("total_games"));
+                stats.put("wins", rs.getInt("wins"));
+                stats.put("avgDuration", rs.getInt("avg_duration"));
+                stats.put("totalShots", rs.getInt("total_shots"));
+                stats.put("avgScore", rs.getDouble("avg_score"));
+            }
+        }
+        return stats;
     }
 }
