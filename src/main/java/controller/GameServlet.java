@@ -172,11 +172,12 @@ public class GameServlet extends HttpServlet {
                 gs.setStatus("finished");
                 gs.setWinnerId(playerId);
 
-                long duration = gs.getStartedAt() != null
-                        ? Duration.between(gs.getStartedAt(), LocalDateTime.now()).getSeconds() : 0;
-                int score = scoreService.calculateScore(gs.getTotalTurns(), (int) duration);
+                int duration = (int) (gs.getStartedAt() != null
+                        ? Duration.between(gs.getStartedAt(), LocalDateTime.now()).getSeconds() : 0);
+                int score = scoreService.calculateScore(gs.getTotalTurns(), duration);
 
                 String p2Display = "PvE".equals(mode) ? "AI" : p2Name;
+
                 saveGameRecord(gs, playerId, null, playerName, p2Display, playerName, mode, score, 0);
                 saveLeaderboard(playerId, true, score);
 
@@ -185,8 +186,13 @@ public class GameServlet extends HttpServlet {
 
                 session.setAttribute("lastScore", score);
                 session.setAttribute("gameWinner", playerName);
+
                 session.removeAttribute("roomId");
                 session.removeAttribute("gameState");
+                if ("PvE".equals(mode)) {
+                    session.removeAttribute("aiBoard");
+                    session.removeAttribute("aiService");
+                }
             }
             else if ("PvE".equals(mode)) {
                 JsonObject aiMove = doAITurn(gs, playerBoard, aiBoard, aiService,
