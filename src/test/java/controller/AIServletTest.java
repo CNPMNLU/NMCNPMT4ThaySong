@@ -15,6 +15,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import model.Direction;
 
 /**
  * Test cho COMMIT-04: AIServlet.executeTurn()
@@ -445,7 +446,7 @@ class AIServletTest {
         ship.setLength(2);
         ship.setStartX(3);
         ship.setStartY(3);
-        ship.setDirection("H");
+        ship.setDirection(Direction.H);
         board.setShips(List.of(ship));
         return board;
     }
