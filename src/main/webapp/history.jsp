@@ -1,97 +1,126 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="model.GameRecord, java.util.List, java.time.format.DateTimeFormatter" %>
+<%@ page import="java.util.*, java.time.format.DateTimeFormatter" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lịch sử đấu — Battleship</title>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📋 Lịch Sử Đấu - Battleship Game</title>
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/history.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
 <body>
 <nav class="navbar">
   <span class="logo">⚓ BATTLESHIP</span>
-  <nav>
-    <a href="${pageContext.request.contextPath}/setup">🎮 Chơi</a>
-    <a href="${pageContext.request.contextPath}/leaderboard">🏆 BXH</a>
-    <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
-  </nav>
+  <div class="nav-links">
+    <a href="${pageContext.request.contextPath}/setup" class="nav-link">🎮 Chơi</a>
+    <a href="${pageContext.request.contextPath}/leaderboard" class="nav-link">🏆 BXH</a>
+    <a href="${pageContext.request.contextPath}/profile" class="nav-link">👤 Hồ Sơ</a>
+    <a href="${pageContext.request.contextPath}/logout" class="nav-link logout">Đăng xuất</a>
+  </div>
 </nav>
 
-<div class="page-wrapper">
-  <h1>📋 Lịch sử đấu</h1>
+<div class="page-wrapper history-page">
+  <header class="page-header">
+    <h1>📋 Lịch Sử Đấu</h1>
+    <p class="subtitle">Xem lại các trận đấu đã chơi và thống kê chi tiết</p>
+  </header>
 
-  <% if (request.getAttribute("error") != null) { %>
-  <div class="alert alert-error">${error}</div>
-  <% } %>
+  <section class="stats-summary">
+    <div class="stat-box stat-total">
+      <div class="stat-icon">🎮</div>
+      <div class="stat-content">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Tổng Trận</div>
+      </div>
+    </div>
+    <div class="stat-box stat-wins">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Thắng</div>
+      </div>
+    </div>
+    <div class="stat-box stat-losses">
+      <div class="stat-icon">❌</div>
+      <div class="stat-content">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Thua</div>
+      </div>
+    </div>
+    <div class="stat-box stat-winrate">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-value">0%</div>
+        <div class="stat-label">Tỷ Lệ Thắng</div>
+      </div>
+    </div>
+  </section>
 
-  <%
-    List<GameRecord> records = (List<GameRecord>) request.getAttribute("records");
-    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    String playerId = (String) session.getAttribute("playerId");
-    String loginName = (String) session.getAttribute("playerName");
-    if (loginName == null) loginName = "Bạn";
-  %>
+  <section class="filter-controls">
+    <div class="filter-group">
+      <label>Chế Độ:</label>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-mode="all">Tất Cả</button>
+        <button class="filter-btn" data-mode="PvE">PvE (AI)</button>
+        <button class="filter-btn" data-mode="PvP">PvP (Người)</button>
+      </div>
+    </div>
 
-  <% if (records == null || records.isEmpty()) { %>
-  <div style="text-align:center;padding:60px;color:var(--text-muted);">
-    <div style="font-size:3rem;margin-bottom:12px">🎮</div>
-    <p>Bạn chưa có trận đấu nào.<br><a href="${pageContext.request.contextPath}/setup">Bắt đầu chơi ngay!</a></p>
-  </div>
-  <% } else { %>
-  <table>
-    <thead>
-      <tr>
-        <th>Thời gian</th>
-        <th>Chế độ</th>
-        <th>Đối thủ</th>
-        <th>Người thắng</th>
-        <th>Kết quả</th>
-        <th>Điểm</th>
-        <th>Số lượt</th>
-        <th>Thời gian trận</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-    <% for (GameRecord r : records) {
-        // Đối thủ: dùng player2Name (đã lưu trong DB — "AI" hoặc tên nhập)
-        String opponent = r.getDisplayPlayer2();
-        if ("PvE".equals(r.getMode())) opponent = "🤖 AI";
+    <div class="filter-group">
+      <label>Kết Quả:</label>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-result="all">Tất Cả</button>
+        <button class="filter-btn" data-result="win">🟢 Thắng</button>
+        <button class="filter-btn" data-result="loss">🔴 Thua</button>
+      </div>
+    </div>
 
-        // Người thắng: lấy từ winner_name đã lưu
-        String winnerDisplay = r.getDisplayWinner();
+    <div class="view-options">
+      <button class="view-btn active" data-view="list">📋 Danh Sách</button>
+      <button class="view-btn" data-view="chart">📊 Thống Kê</button>
+      <button class="view-btn" data-view="timeline">📈 Tiến Độ</button>
+    </div>
+  </section>
 
-        // Kết quả: so tên đăng nhập với winner_name
-        boolean won = loginName.equalsIgnoreCase(winnerDisplay)
-                   || playerId.equals(r.getPlayer1Id()) && loginName.equalsIgnoreCase(r.getWinnerName());
-        // Fallback: nếu winner_name = tên mình
-        String resultLabel = won ? "✓ Thắng" : "✗ Thua";
-        String resultClass = won ? "badge-win" : "badge-lose";
+  <section id="list-view" class="view-section active">
+    <div class="matches-container">
+      <div class="loading">⏳ Đang tải lịch sử...</div>
+    </div>
+    <div class="pagination">
+      <button class="page-btn" id="prev-page">← Trước</button>
+      <span class="page-info">Trang <span id="current-page">1</span></span>
+      <button class="page-btn" id="next-page">Tiếp →</button>
+    </div>
+  </section>
 
-        // Điểm: player1 là người đang đăng nhập (always)
-        int myScore = r.getPlayer1Score();
-    %>
-      <tr>
-        <td style="color:var(--text-muted);font-size:0.85rem">
-          <%= r.getPlayedAt() != null ? r.getPlayedAt().format(fmt) : "—" %>
-        </td>
-        <td><span class="badge <%= "PvE".equals(r.getMode()) ? "badge-pve" : "badge-pvp" %>"><%= r.getMode() %></span></td>
-        <td><%= opponent %></td>
-        <td style="font-weight:600"><%= winnerDisplay %></td>
-        <td><span class="badge <%= resultClass %>"><%= resultLabel %></span></td>
-        <td style="color:var(--warning);font-weight:600"><%= myScore %></td>
-        <td><%= r.getTotalShots() %> lượt</td>
-        <td style="color:var(--text-muted)"><%= r.getDurationSeconds() %>s</td>
-        <td>
-          <a href="${pageContext.request.contextPath}/history?id=<%= r.getId() %>"
-             class="btn btn-secondary btn-sm">Chi tiết</a>
-        </td>
-      </tr>
-    <% } %>
-    </tbody>
-  </table>
-  <% } %>
+  <section id="chart-view" class="view-section">
+    <div class="chart-container">
+      <canvas id="resultChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="performanceChart"></canvas>
+    </div>
+  </section>
+
+  <section id="timeline-view" class="view-section">
+    <div class="timeline-container">
+    </div>
+  </section>
 </div>
+
+<div id="matchModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close">&times;</span>
+    <div id="modalBody" class="modal-body">
+
+    </div>
+  </div>
+</div>
+
+<script src="${pageContext.request.contextPath}/js/api-client.js"></script>
+<script src="${pageContext.request.contextPath}/js/charts.js"></script>
+<script src="${pageContext.request.contextPath}/js/history.js"></script>
 </body>
 </html>

@@ -14,6 +14,8 @@ public class ShotResult {
     private String shipId;
     private int turnNumber;
     private LocalDateTime shotAt;
+    private boolean isSunk;
+    private boolean isHit;
 
     public ShotResult() {}
 
@@ -37,4 +39,20 @@ public class ShotResult {
     public void setTurnNumber(int turnNumber) { this.turnNumber = turnNumber; }
     public LocalDateTime getShotAt() { return shotAt; }
     public void setShotAt(LocalDateTime shotAt) { this.shotAt = shotAt; }
+
+    public boolean isSunk() {
+        return isSunk;
+    }
+
+    public void setSunk(boolean sunk) {
+        isSunk = sunk;
+    }
+
+    public boolean isHit() {
+        return isHit;
+    }
+
+    public void setHit(boolean hit) {
+        isHit = hit;
+    }
 }
