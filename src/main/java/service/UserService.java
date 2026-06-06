@@ -15,6 +15,13 @@ public class UserService {
     private static final Pattern EMAIL_PATTERN =
         Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
+    /**
+     * EMAIL_ENABLED=true  → bắt buộc xác thực email trước khi login
+     * EMAIL_ENABLED=false hoặc không set → tự động verify, có thể login ngay
+     */
+    private static final boolean EMAIL_ENABLED =
+        "true".equalsIgnoreCase(System.getenv("EMAIL_ENABLED"));
+
     public Player register(String username, String password, String email, String baseUrl) throws Exception {
         if (username == null || username.trim().length() < 3)
             throw new IllegalArgumentException("Username phải ít nhất 3 ký tự");
@@ -29,16 +36,35 @@ public class UserService {
         if (userDAO.findByEmail(email.trim()) != null)
             throw new IllegalArgumentException("Email đã được sử dụng");
 
-        String token = generateToken();
         Player p = new Player();
         p.setId(UUID.randomUUID().toString());
         p.setUsername(username.trim());
         p.setPasswordHash(hashPassword(password));
         p.setEmail(email.trim());
-        p.setVerifyToken(token);
-        userDAO.insert(p);
 
-        emailService.sendVerificationEmail(email.trim(), baseUrl + "/verify-email?token=" + token);
+        if (EMAIL_ENABLED) {
+            String token = generateToken();
+            p.setVerifyToken(token);
+            p.setEmailVerified(false);
+
+            // Insert trước, nếu email fail thì xoá user (rollback thủ công)
+            userDAO.insert(p);
+            try {
+                emailService.sendVerificationEmail(email.trim(), baseUrl + "/verify-email?token=" + token);
+            } catch (Exception emailEx) {
+                userDAO.deleteById(p.getId());
+                throw new IllegalArgumentException(
+                    "Không thể gửi email xác thực: " + emailEx.getMessage() +
+                    ". Kiểm tra cấu hình MAIL_HOST, MAIL_USER, MAIL_PASS."
+                );
+            }
+        } else {
+            // Chế độ dev: không cần email, tự động verify
+            p.setEmailVerified(true);
+            p.setVerifyToken(null);
+            userDAO.insert(p);
+        }
+
         return p;
     }
 
@@ -60,7 +86,11 @@ public class UserService {
         if (p.isEmailVerified()) throw new IllegalArgumentException("Email đã được xác thực");
         String token = generateToken();
         userDAO.updateVerifyToken(userId, token);
-        emailService.sendVerificationEmail(p.getEmail(), baseUrl + "/verify-email?token=" + token);
+        try {
+            emailService.sendVerificationEmail(p.getEmail(), baseUrl + "/verify-email?token=" + token);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Không thể gửi email: " + e.getMessage());
+        }
     }
 
     public static String hashPassword(String password) {

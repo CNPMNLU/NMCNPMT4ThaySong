@@ -11,6 +11,9 @@ import java.io.IOException;
 public class RegisterServlet extends HttpServlet {
     private final UserService userService = new UserService();
 
+    private static final boolean EMAIL_ENABLED =
+        "true".equalsIgnoreCase(System.getenv("EMAIL_ENABLED"));
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession s = req.getSession(false);
@@ -44,8 +47,18 @@ public class RegisterServlet extends HttpServlet {
         try {
             String baseUrl = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
             Player p = userService.register(username, password, email, baseUrl);
-            req.getSession(true).setAttribute("pendingVerifyId", p.getId());
-            resp.sendRedirect(req.getContextPath() + "/pending-verification.jsp");
+
+            if (EMAIL_ENABLED) {
+                req.getSession(true).setAttribute("pendingVerifyId", p.getId());
+                resp.sendRedirect(req.getContextPath() + "/pending-verification.jsp");
+            } else {
+                // Dev mode: đăng ký xong → login luôn
+                HttpSession session = req.getSession(true);
+                session.setAttribute("playerId",   p.getId());
+                session.setAttribute("playerName", p.getUsername());
+                session.setMaxInactiveInterval(3600);
+                resp.sendRedirect(req.getContextPath() + "/setup");
+            }
         } catch (Exception e) {
             error(req, resp, e.getMessage() != null ? e.getMessage() : "Đăng ký thất bại", username, email);
         }

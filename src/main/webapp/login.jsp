@@ -37,6 +37,8 @@
         <label style="display:flex;justify-content:space-between;align-items:center">
           Mật khẩu
         </label>
+        <a href="${pageContext.request.contextPath}/forgot-password"
+           style="font-size:0.8rem;font-weight:400;text-transform:none;letter-spacing:0">Quên mật khẩu?</a>
         <input type="password" name="password" placeholder="Nhập password" required>
       </div>
       <button type="submit" class="btn btn-primary">Đăng nhập</button>
