@@ -74,9 +74,9 @@ public class BoardService {
         if (len <= 0) return false;
 
         // Lớp 2: Kiểm tra tràn biên theo hướng
-        if ("H".equals(dir)) {
+        if (dir == Direction.H) {
             if (x + len > 10) return false;
-        } else if ("V".equals(dir)) {
+        } else if (dir == Direction.V) {
             if (y + len > 10) return false;
         } else {
             return false; // Hướng không hợp lệ
