@@ -1,0 +1,68 @@
+29-May-2026 23:56:13.346 SEVERE [main] org.apache.catalina.startup.Catalina.stopServer Could not contact [localhost:8005] (base port [8005] and offset [0]). Tomcat may not be running.
+29-May-2026 23:56:13.354 SEVERE [main] org.apache.catalina.startup.Catalina.stopServer Error stopping Catalina
+	java.net.ConnectException: Connection refused: connect
+		at java.base/java.net.PlainSocketImpl.connect0(Native Method)
+		at java.base/java.net.PlainSocketImpl.socketConnect(PlainSocketImpl.java:101)
+		at java.base/java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:412)
+		at java.base/java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:255)
+		at java.base/java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:237)
+		at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+		at java.base/java.net.Socket.connect(Socket.java:609)
+		at java.base/java.net.Socket.connect(Socket.java:558)
+		at java.base/java.net.Socket.<init>(Socket.java:454)
+		at java.base/java.net.Socket.<init>(Socket.java:231)
+		at org.apache.catalina.startup.Catalina.stopServer(Catalina.java:654)
+		at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+		at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+		at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+		at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+		at org.apache.catalina.startup.Bootstrap.stopServer(Bootstrap.java:390)
+		at org.apache.catalina.startup.Bootstrap.main(Bootstrap.java:479)
+29-May-2026 23:59:10.652 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version name:   Apache Tomcat/10.1.54
+29-May-2026 23:59:10.666 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server built:          Mar 30 2026 22:31:53 UTC
+29-May-2026 23:59:10.666 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version number: 10.1.54.0
+29-May-2026 23:59:10.666 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log OS Name:               Windows 10
+29-May-2026 23:59:10.666 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log OS Version:            10.0
+29-May-2026 23:59:10.671 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Architecture:          amd64
+29-May-2026 23:59:10.671 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Java Home:             C:\Program Files\Eclipse Adoptium\jdk-11.0.31.11-hotspot
+29-May-2026 23:59:10.672 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log JVM Version:           11.0.31+11
+29-May-2026 23:59:10.672 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log JVM Vendor:            Eclipse Adoptium
+29-May-2026 23:59:10.672 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log CATALINA_BASE:         C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+29-May-2026 23:59:10.672 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log CATALINA_HOME:         C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+29-May-2026 23:59:10.703 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.util.logging.config.file=c:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\conf\logging.properties
+29-May-2026 23:59:10.711 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djdk.tls.ephemeralDHKeySize=2048
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.protocol.handler.pkgs=org.apache.catalina.webresources
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dsun.io.useCanonCaches=false
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang=ALL-UNNAMED
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.io=ALL-UNNAMED
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.util=ALL-UNNAMED
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dcatalina.base=c:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dcatalina.home=c:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+29-May-2026 23:59:10.712 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.io.tmpdir=c:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\temp
+29-May-2026 23:59:10.726 INFO [main] org.apache.catalina.core.AprLifecycleListener.lifecycleEvent Loaded Apache Tomcat Native library [2.0.14] using APR version [1.7.6].
+29-May-2026 23:59:10.761 INFO [main] org.apache.catalina.core.AprLifecycleListener.initializeSSL OpenSSL successfully initialized [OpenSSL 3.5.5 27 Jan 2026]
+29-May-2026 23:59:11.338 INFO [main] org.apache.coyote.AbstractProtocol.init Initializing ProtocolHandler ["http-nio-8080"]
+29-May-2026 23:59:11.421 INFO [main] org.apache.catalina.startup.Catalina.load Server initialization in [1285] milliseconds
+29-May-2026 23:59:11.530 INFO [main] org.apache.catalina.core.StandardService.startInternal Starting service [Catalina]
+29-May-2026 23:59:11.539 INFO [main] org.apache.catalina.core.StandardEngine.startInternal Starting Servlet engine: [Apache Tomcat/10.1.54]
+29-May-2026 23:59:11.621 INFO [main] org.apache.catalina.startup.HostConfig.deployWAR Deploying web application archive [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\BattleshipGame.war]
+29-May-2026 23:59:11.712 INFO [main] org.apache.catalina.startup.ExpandWar.expand An expanded directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\BattleshipGame] was found with a last modified time that did not match the associated WAR. It will be deleted.
+29-May-2026 23:59:13.527 INFO [main] org.apache.jasper.servlet.TldScanner.scanJars At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+29-May-2026 23:59:13.961 WARNING [main] org.apache.catalina.util.SessionIdGeneratorBase.createSecureRandom Creation of SecureRandom instance for session ID generation using [SHA1PRNG] took [387] milliseconds.
+29-May-2026 23:59:14.005 INFO [main] org.apache.catalina.startup.HostConfig.deployWAR Deployment of web application archive [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\BattleshipGame.war] has finished in [2,384] ms
+29-May-2026 23:59:14.015 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\docs]
+29-May-2026 23:59:14.118 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\docs] has finished in [104] ms
+29-May-2026 23:59:14.118 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\examples]
+29-May-2026 23:59:14.911 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\examples] has finished in [793] ms
+29-May-2026 23:59:14.914 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\host-manager]
+29-May-2026 23:59:15.022 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\host-manager] has finished in [111] ms
+29-May-2026 23:59:15.031 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\manager]
+29-May-2026 23:59:15.162 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\manager] has finished in [131] ms
+29-May-2026 23:59:15.171 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\ROOT]
+29-May-2026 23:59:15.262 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\ROOT] has finished in [91] ms
+29-May-2026 23:59:15.272 INFO [main] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-nio-8080"]
+29-May-2026 23:59:15.686 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [4271] milliseconds

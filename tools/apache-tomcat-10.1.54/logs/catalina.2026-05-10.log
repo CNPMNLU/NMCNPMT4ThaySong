@@ -1,0 +1,47 @@
+10-May-2026 18:13:03.549 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version name:   Apache Tomcat/10.1.54
+10-May-2026 18:13:03.637 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server built:          Mar 30 2026 22:31:53 UTC
+10-May-2026 18:13:03.637 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version number: 10.1.54.0
+10-May-2026 18:13:03.655 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log OS Name:               Windows 10
+10-May-2026 18:13:03.655 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log OS Version:            10.0
+10-May-2026 18:13:03.655 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Architecture:          amd64
+10-May-2026 18:13:03.660 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Java Home:             C:\Program Files\Eclipse Adoptium\jdk-11.0.31.11-hotspot
+10-May-2026 18:13:03.676 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log JVM Version:           11.0.31+11
+10-May-2026 18:13:03.696 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log JVM Vendor:            Eclipse Adoptium
+10-May-2026 18:13:03.707 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log CATALINA_BASE:         C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+10-May-2026 18:13:03.708 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log CATALINA_HOME:         C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+10-May-2026 18:13:03.765 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.util.logging.config.file=C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\conf\logging.properties
+10-May-2026 18:13:03.781 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager
+10-May-2026 18:13:03.783 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djdk.tls.ephemeralDHKeySize=2048
+10-May-2026 18:13:03.783 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.protocol.handler.pkgs=org.apache.catalina.webresources
+10-May-2026 18:13:03.783 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dsun.io.useCanonCaches=false
+10-May-2026 18:13:03.783 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang=ALL-UNNAMED
+10-May-2026 18:13:03.783 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+10-May-2026 18:13:03.783 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.io=ALL-UNNAMED
+10-May-2026 18:13:03.800 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.util=ALL-UNNAMED
+10-May-2026 18:13:03.800 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+10-May-2026 18:13:03.800 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+10-May-2026 18:13:03.800 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dcatalina.base=C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+10-May-2026 18:13:03.816 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Dcatalina.home=C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54
+10-May-2026 18:13:03.816 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Command line argument: -Djava.io.tmpdir=C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\temp
+10-May-2026 18:13:03.816 INFO [main] org.apache.catalina.core.AprLifecycleListener.lifecycleEvent Loaded Apache Tomcat Native library [2.0.14] using APR version [1.7.6].
+10-May-2026 18:13:03.850 INFO [main] org.apache.catalina.core.AprLifecycleListener.initializeSSL OpenSSL successfully initialized [OpenSSL 3.5.5 27 Jan 2026]
+10-May-2026 18:13:05.365 INFO [main] org.apache.coyote.AbstractProtocol.init Initializing ProtocolHandler ["http-nio-8080"]
+10-May-2026 18:13:05.644 INFO [main] org.apache.catalina.startup.Catalina.load Server initialization in [3171] milliseconds
+10-May-2026 18:13:05.932 INFO [main] org.apache.catalina.core.StandardService.startInternal Starting service [Catalina]
+10-May-2026 18:13:05.936 INFO [main] org.apache.catalina.core.StandardEngine.startInternal Starting Servlet engine: [Apache Tomcat/10.1.54]
+10-May-2026 18:13:06.125 INFO [main] org.apache.catalina.startup.HostConfig.deployWAR Deploying web application archive [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\BattleshipGame.war]
+10-May-2026 18:13:10.456 INFO [main] org.apache.jasper.servlet.TldScanner.scanJars At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+10-May-2026 18:13:11.306 WARNING [main] org.apache.catalina.util.SessionIdGeneratorBase.createSecureRandom Creation of SecureRandom instance for session ID generation using [SHA1PRNG] took [752] milliseconds.
+10-May-2026 18:13:11.404 INFO [main] org.apache.catalina.startup.HostConfig.deployWAR Deployment of web application archive [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\BattleshipGame.war] has finished in [5,279] ms
+10-May-2026 18:13:11.420 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\docs]
+10-May-2026 18:13:11.607 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\docs] has finished in [187] ms
+10-May-2026 18:13:11.607 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\examples]
+10-May-2026 18:13:13.232 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\examples] has finished in [1,625] ms
+10-May-2026 18:13:13.232 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\host-manager]
+10-May-2026 18:13:13.372 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\host-manager] has finished in [140] ms
+10-May-2026 18:13:13.388 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\manager]
+10-May-2026 18:13:13.641 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\manager] has finished in [253] ms
+10-May-2026 18:13:13.645 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deploying web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\ROOT]
+10-May-2026 18:13:13.773 INFO [main] org.apache.catalina.startup.HostConfig.deployDirectory Deployment of web application directory [C:\Users\admn\NMCNPMT4ThaySong\tools\apache-tomcat-10.1.54\webapps\ROOT] has finished in [128] ms
+10-May-2026 18:13:13.813 INFO [main] org.apache.coyote.AbstractProtocol.start Starting ProtocolHandler ["http-nio-8080"]
+10-May-2026 18:13:14.880 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [9229] milliseconds
