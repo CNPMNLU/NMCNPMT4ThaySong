@@ -5,6 +5,7 @@ import model.Player;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import org.json.JSONObject;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -38,19 +39,17 @@ public class GoogleCallbackServlet extends HttpServlet {
             error(req, resp, "Không nhận được mã xác thực từ Google."); return;
         }
         try {
-            String tokenResponse = post(TOKEN_URL,
-                    "code="           + URLEncoder.encode(code,          "UTF-8")
-                            + "&client_id="     + URLEncoder.encode(CLIENT_ID,     "UTF-8")
-                            + "&client_secret=" + URLEncoder.encode(CLIENT_SECRET, "UTF-8")
-                            + "&redirect_uri="  + URLEncoder.encode(REDIRECT_URI,  "UTF-8")
-                            + "&grant_type=authorization_code");
+            String token    = new JSONObject(post(TOKEN_URL,
+                "code="           + URLEncoder.encode(code,          "UTF-8")
+              + "&client_id="     + URLEncoder.encode(CLIENT_ID,     "UTF-8")
+              + "&client_secret=" + URLEncoder.encode(CLIENT_SECRET, "UTF-8")
+              + "&redirect_uri="  + URLEncoder.encode(REDIRECT_URI,  "UTF-8")
+              + "&grant_type=authorization_code")).getString("access_token");
 
-            String token    = extractJsonString(tokenResponse, "access_token");
-            String userInfo = get(USERINFO_URL, token);
-
-            String googleId = extractJsonString(userInfo, "sub");
-            String email    = extractJsonString(userInfo, "email");
-            String name     = extractJsonString(userInfo, "name");
+            JSONObject info = new JSONObject(get(USERINFO_URL, token));
+            String googleId = info.getString("sub");
+            String email    = info.optString("email", "");
+            String name     = info.optString("name",  "");
 
             Player p = userDAO.findByGoogleId(googleId);
             if (p == null) {
@@ -71,22 +70,6 @@ public class GoogleCallbackServlet extends HttpServlet {
             getServletContext().log("GoogleCallbackServlet", e);
             error(req, resp, "Đăng nhập Google thất bại. Vui lòng thử lại.");
         }
-    }
-
-    private String extractJsonString(String json, String key) {
-        String searchKey = "\"" + key + "\"";
-        int keyIdx = json.indexOf(searchKey);
-        if (keyIdx == -1) return "";
-        int colonIdx = json.indexOf(":", keyIdx + searchKey.length());
-        if (colonIdx == -1) return "";
-        int quoteStart = json.indexOf("\"", colonIdx + 1);
-        if (quoteStart == -1) return "";
-        int quoteEnd = quoteStart + 1;
-        while (quoteEnd < json.length()) {
-            if (json.charAt(quoteEnd) == '"' && json.charAt(quoteEnd - 1) != '\\') break;
-            quoteEnd++;
-        }
-        return json.substring(quoteStart + 1, quoteEnd);
     }
 
     private String post(String url, String params) throws IOException {

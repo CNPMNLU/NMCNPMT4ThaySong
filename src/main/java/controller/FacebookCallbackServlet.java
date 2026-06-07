@@ -5,6 +5,7 @@ import model.Player;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import org.json.JSONObject;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -39,18 +40,16 @@ public class FacebookCallbackServlet extends HttpServlet {
         }
         try {
             String tokenUrl = TOKEN_URL
-                    + "?client_id="     + URLEncoder.encode(APP_ID,       "UTF-8")
-                    + "&client_secret=" + URLEncoder.encode(APP_SECRET,   "UTF-8")
-                    + "&redirect_uri="  + URLEncoder.encode(REDIRECT_URI, "UTF-8")
-                    + "&code="          + URLEncoder.encode(code,         "UTF-8");
+                + "?client_id="     + URLEncoder.encode(APP_ID,       "UTF-8")
+                + "&client_secret=" + URLEncoder.encode(APP_SECRET,   "UTF-8")
+                + "&redirect_uri="  + URLEncoder.encode(REDIRECT_URI, "UTF-8")
+                + "&code="          + URLEncoder.encode(code,         "UTF-8");
+            String accessToken = new JSONObject(get(tokenUrl)).getString("access_token");
 
-            String tokenResponse = get(tokenUrl);
-            String accessToken   = extractJsonString(tokenResponse, "access_token");
-
-            String userInfoResponse = get(USERINFO_URL + "&access_token=" + URLEncoder.encode(accessToken, "UTF-8"));
-            String facebookId = extractJsonString(userInfoResponse, "id");
-            String email      = extractJsonString(userInfoResponse, "email");
-            String name       = extractJsonString(userInfoResponse, "name");
+            JSONObject info   = new JSONObject(get(USERINFO_URL + "&access_token=" + URLEncoder.encode(accessToken, "UTF-8")));
+            String facebookId = info.getString("id");
+            String email      = info.optString("email", "");
+            String name       = info.optString("name",  "");
 
             Player p = userDAO.findByFacebookId(facebookId);
             if (p == null) {
@@ -71,22 +70,6 @@ public class FacebookCallbackServlet extends HttpServlet {
             getServletContext().log("FacebookCallbackServlet", e);
             error(req, resp, "Đăng nhập Facebook thất bại. Vui lòng thử lại.");
         }
-    }
-
-    private String extractJsonString(String json, String key) {
-        String searchKey = "\"" + key + "\"";
-        int keyIdx = json.indexOf(searchKey);
-        if (keyIdx == -1) return "";
-        int colonIdx = json.indexOf(":", keyIdx + searchKey.length());
-        if (colonIdx == -1) return "";
-        int quoteStart = json.indexOf("\"", colonIdx + 1);
-        if (quoteStart == -1) return "";
-        int quoteEnd = quoteStart + 1;
-        while (quoteEnd < json.length()) {
-            if (json.charAt(quoteEnd) == '"' && json.charAt(quoteEnd - 1) != '\\') break;
-            quoteEnd++;
-        }
-        return json.substring(quoteStart + 1, quoteEnd);
     }
 
     private String get(String url) throws IOException {
