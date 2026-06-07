@@ -46,7 +46,7 @@ public class BoardService {
         if (!isValidPlacement(board, ship)) return false;
         board.getShips().add(ship);
         Cell[][] cells = board.getCells();
-        String dir = ship.getDirection();
+        Direction dir = ship.getDirection();
         for (int i = 0; i < ship.getLength(); i++) {
             int cx = (ship.getDirection() == Direction.H) ? ship.getStartX() + i : ship.getStartX();
             int cy = (ship.getDirection() == Direction.V) ? ship.getStartY() + i : ship.getStartY();
@@ -67,7 +67,7 @@ public class BoardService {
         int x   = ship.getStartX();
         int y   = ship.getStartY();
         int len = ship.getLength();
-        String dir = ship.getDirection();
+        Direction dir = ship.getDirection();
 
         // Lớp 1: Kiểm tra tọa độ bắt đầu hợp lệ
         if (x < 0 || x >= 10 || y < 0 || y >= 10) return false;

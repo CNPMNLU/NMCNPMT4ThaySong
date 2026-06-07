@@ -33,7 +33,7 @@ public enum Direction {
      */
     public static Direction fromString(String s) {
         if (s == null) return H;
-        if (s.equalsIgnoreCase("V")) {
+        if (s.trim().toUpperCase().startsWith("V")) {
             return V;
         }
         return H;
