@@ -209,7 +209,7 @@ public class SetupServlet extends HttpServlet {
             ship.setLength(length);
             ship.setStartX(x);
             ship.setStartY(y);
-            ship.setDirection(dir);
+            ship.setDirectionFromString(dir);
 
             // UC-05: Kiểm tra hợp lệ trước khi đặt (BR-03)
             if (!boardService.isValidPlacement(board, ship)) {
