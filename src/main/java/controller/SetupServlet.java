@@ -82,9 +82,17 @@ public class SetupServlet extends HttpServlet {
             String p1Name = (String) session.getAttribute("playerName");
             room.setPlayer1Name(p1Name != null ? p1Name : "Người chơi 1");
 
+            // =====================================================
+            // UC04 VERSION 2
+            // - Tự động gán tên "Người chơi 2" nếu bỏ trống
+            // - Chuẩn hóa dữ liệu mode và difficulty
+            // - Tạo roomId duy nhất cho mỗi trận đấu
+            // =====================================================
             // UC-04: Thiết lập đối thủ theo chế độ
             if ("PvP".equals(mode)) {
                 String p2name = req.getParameter("player2Name");
+                // [UC04-V2] Loại bỏ khoảng trắng thừa trước khi kiểm tra
+                if (p2name != null) p2name = p2name.trim();
                 room.setPlayer2Name(
                     (p2name != null && !p2name.isEmpty()) ? p2name : "Người chơi 2"
                 );
@@ -98,7 +106,7 @@ public class SetupServlet extends HttpServlet {
             } else {
                 String shipsJson = req.getParameter("ships");
                 if (shipsJson != null && !shipsJson.isEmpty()) {
-                    parseAndPlaceShips(board, shipsJson);
+                parseAndPlaceShips(board, shipsJson);
                 } else {
                     boardService.autoPlace(board);
                 }
@@ -141,6 +149,8 @@ public class SetupServlet extends HttpServlet {
                 String shipsJsonRaw = req.getParameter("ships");
                 session.setAttribute("shipsJson", shipsJsonRaw != null ? shipsJsonRaw : "[]");
                 String p2name = req.getParameter("player2Name");
+                // [UC04-V2] Loại bỏ khoảng trắng thừa trước khi kiểm tra
+                if (p2name != null) p2name = p2name.trim();
                 session.setAttribute("player2Name", (p2name != null && !p2name.isEmpty()) ? p2name : "Người chơi 2");
             }
 
@@ -192,13 +202,13 @@ public class SetupServlet extends HttpServlet {
             int x      = Integer.parseInt(xStr);
             int y      = Integer.parseInt(yStr);
 
-                Ship ship = new Ship();
-                ship.setId(UUID.randomUUID().toString());
-                ship.setBoardId(board.getId());
-                ship.setType(type);
-                ship.setLength(length);
-                ship.setStartX(x);
-                ship.setStartY(y);
+            Ship ship = new Ship();
+            ship.setId(UUID.randomUUID().toString());
+            ship.setBoardId(board.getId());
+            ship.setType(type);
+            ship.setLength(length);
+            ship.setStartX(x);
+            ship.setStartY(y);
             ship.setDirection(dir);
 
             // UC-05: Kiểm tra hợp lệ trước khi đặt (BR-03)
@@ -219,7 +229,7 @@ public class SetupServlet extends HttpServlet {
             throw new IllegalArgumentException(
                 "Đội hình thuyền không đúng 5 thuyền tiêu chuẩn (5, 4, 3, 3, 2)!"
             );
-    }
+        }
     }
 
     // ─────────────────────────────────────────────
