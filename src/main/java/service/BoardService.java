@@ -1,3 +1,12 @@
+
+// =====================================================
+// UC05 VERSION 2
+// Nâng cấp:
+// 1. Validate tràn biên bàn cờ 10x10.
+// 2. Validate đè thuyền (Overlap Validation).
+// 3. Auto Place bảo đảm đủ 5 thuyền.
+// 4. Bổ sung comment tiếng Việt để báo cáo.
+// =====================================================
 package service;
 
 import jakarta.servlet.http.HttpSession;
@@ -101,7 +110,7 @@ public class BoardService {
         Cell[][] cells = board.getCells();
         if (cells == null) {
             cells = new Cell[10][10];
-        for (int x = 0; x < 10; x++)
+            for (int x = 0; x < 10; x++)
                 for (int y = 0; y < 10; y++)
                     cells[x][y] = new Cell(UUID.randomUUID().toString(), board.getId(), x, y);
             board.setCells(cells);
