@@ -30,8 +30,12 @@ import java.util.UUID;
 public class SetupServlet extends HttpServlet {
     private final BoardService boardService = new BoardService();
 
+    // ─────────────────────────────────────────────
+    // UC-04: Hiển thị trang thiết lập
+    // ─────────────────────────────────────────────
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("playerId") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -40,8 +44,12 @@ public class SetupServlet extends HttpServlet {
         req.getRequestDispatcher("/setup.jsp").forward(req, resp);
     }
 
+    // ─────────────────────────────────────────────
+    // UC-04 + UC-05: Xử lý submit thiết lập trận đấu
+    // ─────────────────────────────────────────────
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("playerId") == null) {
@@ -53,7 +61,9 @@ public class SetupServlet extends HttpServlet {
         String action = req.getParameter("action");
         String mode = req.getParameter("mode");
         String difficulty = req.getParameter("difficulty");
-        if (mode == null || mode.isEmpty()) mode = "PvE";
+
+        // Giá trị mặc định nếu client không gửi
+        if (mode == null || mode.isEmpty())       mode = "PvE";
         if (difficulty == null || difficulty.isEmpty()) difficulty = "Easy";
 
         try {
@@ -61,6 +71,28 @@ public class SetupServlet extends HttpServlet {
             String boardId = UUID.randomUUID().toString();
             Board board = boardService.createBoard(boardId, roomId, playerId);
 
+            Room room = new Room();
+            room.setId(roomId);
+            room.setName("Phòng đấu của " + playerId);
+            room.setMode(mode);
+            room.setDifficulty(difficulty);
+            room.setStatus("playing");
+            room.setPlayer1Id(playerId);
+
+            String p1Name = (String) session.getAttribute("playerName");
+            room.setPlayer1Name(p1Name != null ? p1Name : "Người chơi 1");
+
+            // UC-04: Thiết lập đối thủ theo chế độ
+            if ("PvP".equals(mode)) {
+                String p2name = req.getParameter("player2Name");
+                room.setPlayer2Name(
+                    (p2name != null && !p2name.isEmpty()) ? p2name : "Người chơi 2"
+                );
+            } else {
+                room.setPlayer2Name("AI");
+            }
+
+            // UC-05: Đặt thuyền (Auto hoặc Manual)
             if ("auto".equals(action)) {
                 boardService.autoPlace(board);
             } else {
@@ -120,21 +152,45 @@ public class SetupServlet extends HttpServlet {
         }
     }
 
-    private void parseAndPlaceShips(Board board, String shipsJson) {
+    // ─────────────────────────────────────────────
+    // UC-05: Parse JSON thuyền từ client và đặt lên Board
+    //   - Kiểm tra đủ 5 thuyền (BR-02)
+    //   - Mỗi thuyền qua isValidPlacement (BR-03)
+    //   - Kiểm tra hạm đội đúng chuẩn {5,4,3,3,2} (BR-02)
+    // ─────────────────────────────────────────────
+    private void parseAndPlaceShips(Board board, String shipsJson) throws Exception {
+        if (shipsJson == null || shipsJson.trim().isEmpty()) {
+            throw new IllegalArgumentException("Không nhận được dữ liệu thiết lập thuyền!");
+        }
         shipsJson = shipsJson.trim();
-        // Remove outer brackets
+        // Loại bỏ ngoặc mảng bên ngoài
         if (shipsJson.startsWith("[")) shipsJson = shipsJson.substring(1);
-        if (shipsJson.endsWith("]")) shipsJson = shipsJson.substring(0, shipsJson.length() - 1);
+        if (shipsJson.endsWith("]"))   shipsJson = shipsJson.substring(0, shipsJson.length() - 1);
 
-        // Split by },{
+        if (shipsJson.isEmpty()) {
+            throw new IllegalArgumentException("Danh sách thuyền trống!");
+        }
+
+        // Phân tách từng object JSON thuyền
         String[] entries = shipsJson.split("\\},\\s*\\{");
+        if (entries.length != 5) {
+            throw new IllegalArgumentException("Bạn phải đặt chính xác 5 thuyền!");
+        }
+
         for (String entry : entries) {
-            try {
-                String type = extractJsonValue(entry, "type");
-                int length = Integer.parseInt(extractJsonValue(entry, "length"));
-                int x = Integer.parseInt(extractJsonValue(entry, "x"));
-                int y = Integer.parseInt(extractJsonValue(entry, "y"));
-                String dir = extractJsonValue(entry, "dir");
+            String type = extractJsonValue(entry, "type");
+            String lengthStr = extractJsonValue(entry, "length");
+            String xStr = extractJsonValue(entry, "x");
+            String yStr = extractJsonValue(entry, "y");
+            String dir = extractJsonValue(entry, "dir");
+
+            if (type.isEmpty() || lengthStr.isEmpty() || xStr.isEmpty() || yStr.isEmpty() || dir.isEmpty()) {
+                throw new IllegalArgumentException("Dữ liệu thông tin thuyền không hợp lệ!");
+            }
+
+            int length = Integer.parseInt(lengthStr);
+            int x      = Integer.parseInt(xStr);
+            int y      = Integer.parseInt(yStr);
 
                 Ship ship = new Ship();
                 ship.setId(UUID.randomUUID().toString());
@@ -143,24 +199,45 @@ public class SetupServlet extends HttpServlet {
                 ship.setLength(length);
                 ship.setStartX(x);
                 ship.setStartY(y);
-                ship.setDirectionFromString(dir);
-                boardService.placeShip(board, ship);
-            } catch (Exception ignored) {
+            ship.setDirection(dir);
+
+            // UC-05: Kiểm tra hợp lệ trước khi đặt (BR-03)
+            if (!boardService.isValidPlacement(board, ship)) {
+                char colLetter = (char) ('A' + x);
+                int rowNumber  = y + 1;
+                throw new IllegalArgumentException(
+                    "Thuyền " + type + " ở vị trí " + colLetter + rowNumber
+                    + " hướng " + ("H".equals(dir) ? "Ngang" : "Dọc")
+                    + " không hợp lệ (vượt biên hoặc bị chồng lên thuyền khác)!"
+                );
             }
+            boardService.placeShip(board, ship);
         }
-        if (board.getShips().size() < 5) boardService.autoPlace(board);
+
+        // Kiểm tra hạm đội đúng chuẩn {5,4,3,3,2} (BR-02)
+        if (!boardService.isValidFleet(board)) {
+            throw new IllegalArgumentException(
+                "Đội hình thuyền không đúng 5 thuyền tiêu chuẩn (5, 4, 3, 3, 2)!"
+            );
+    }
     }
 
+    // ─────────────────────────────────────────────
+    // Tiện ích: trích xuất giá trị từ JSON string thô
+    // ─────────────────────────────────────────────
     private String extractJsonValue(String json, String key) {
         String pattern = "\"" + key + "\"";
         int idx = json.indexOf(pattern);
         if (idx < 0) return "";
         int colon = json.indexOf(":", idx);
         int start = colon + 1;
-        while (start < json.length() && (json.charAt(start) == ' ' || json.charAt(start) == '"')) start++;
+        while (start < json.length()
+               && (json.charAt(start) == ' ' || json.charAt(start) == '"')) start++;
         int end = start;
-        while (end < json.length() && json.charAt(end) != '"' && json.charAt(end) != ',' && json.charAt(end) != '}')
-            end++;
+        while (end < json.length()
+               && json.charAt(end) != '"'
+               && json.charAt(end) != ','
+               && json.charAt(end) != '}') end++;
         return json.substring(start, end).replace("\"", "").trim();
     }
 }

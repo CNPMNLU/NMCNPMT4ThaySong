@@ -29,10 +29,15 @@ public class BoardService {
         return board;
     }
 
+    // ─────────────────────────────────────────────
+    // UC-05: Đặt thuyền vào Board (sau khi validate)
+    // ─────────────────────────────────────────────
     public boolean placeShip(Board board, Ship ship) {
+        if (board == null || ship == null) return false;
         if (!isValidPlacement(board, ship)) return false;
         board.getShips().add(ship);
         Cell[][] cells = board.getCells();
+        String dir = ship.getDirection();
         for (int i = 0; i < ship.getLength(); i++) {
             int cx = (ship.getDirection() == Direction.H) ? ship.getStartX() + i : ship.getStartX();
             int cy = (ship.getDirection() == Direction.V) ? ship.getStartY() + i : ship.getStartY();
@@ -42,15 +47,37 @@ public class BoardService {
         return true;
     }
 
+    // ─────────────────────────────────────────────
+    // UC-05: Kiểm tra vị trí đặt thuyền hợp lệ
+    //   Lớp 1: Tọa độ bắt đầu nằm trong lưới
+    //   Lớp 2: Không tràn biên theo hướng H/V
+    //   Lớp 3: Không đè lên thuyền khác (overlap)
+    // ─────────────────────────────────────────────
     public boolean isValidPlacement(Board board, Ship ship) {
+        if (board == null || ship == null) return false;
+        int x   = ship.getStartX();
+        int y   = ship.getStartY();
+        int len = ship.getLength();
+        String dir = ship.getDirection();
+
+        // Lớp 1: Kiểm tra tọa độ bắt đầu hợp lệ
+        if (x < 0 || x >= 10 || y < 0 || y >= 10) return false;
+        if (len <= 0) return false;
+
+        // Lớp 2: Kiểm tra tràn biên theo hướng
+        if ("H".equals(dir)) {
         int x = ship.getStartX(), y = ship.getStartY(), len = ship.getLength();
         if (ship.getDirection() == Direction.H) {
             if (x + len > 10) return false;
-        } else {
+        } else if ("V".equals(dir)) {
             if (y + len > 10) return false;
+        } else {
+            return false; // Hướng không hợp lệ
         }
-        if (x < 0 || y < 0 || x >= 10 || y >= 10) return false;
+
+        // Lớp 3: Kiểm tra va chạm (overlap)
         Cell[][] cells = board.getCells();
+        if (cells == null) return false;
         for (int i = 0; i < len; i++) {
             int cx = (ship.getDirection() == Direction.H) ? x + i : x;
             int cy = (ship.getDirection() == Direction.V) ? y + i : y;
@@ -59,14 +86,37 @@ public class BoardService {
         return true;
     }
 
+    // ─────────────────────────────────────────────
+    // UC-05: Tự động đặt thuyền (Auto Place)
+    //   - Reset toàn bộ cells trước khi đặt mới
+    //   - Random tọa độ + hướng, thử tối đa 1000 lần
+    //     để đảm bảo thuật toán không bao giờ treo
+    //   - Luôn tuân thủ isValidPlacement (BR-03)
+    // ─────────────────────────────────────────────
     public void autoPlace(Board board) {
+        if (board == null) return;
         board.getShips().clear();
+
+        // Đảm bảo cells đã được khởi tạo
         Cell[][] cells = board.getCells();
+        if (cells == null) {
+            cells = new Cell[10][10];
         for (int x = 0; x < 10; x++)
+                for (int y = 0; y < 10; y++)
+                    cells[x][y] = new Cell(UUID.randomUUID().toString(), board.getId(), x, y);
+            board.setCells(cells);
+        }
+
+        // Reset toàn bộ cells
+        for (int x = 0; x < 10; x++) {
             for (int y = 0; y < 10; y++) {
+                if (cells[x][y] == null)
+                    cells[x][y] = new Cell(UUID.randomUUID().toString(), board.getId(), x, y);
                 cells[x][y].setHasShip(false);
                 cells[x][y].setShipId(null);
             }
+        }
+
         Random rand = new Random();
         for (int i = 0; i < SHIP_TYPES.length; i++) {
             int len = SHIP_CONFIGS[i][0];
@@ -88,8 +138,25 @@ public class BoardService {
         }
     }
 
+    // ─────────────────────────────────────────────
+    // Kiểm tra hạm đội hợp lệ: đúng 5 thuyền {5,4,3,3,2}
+    // ─────────────────────────────────────────────
+    public boolean isValidFleet(Board board) {
+        if (board == null || board.getShips() == null) return false;
+        List<Ship> ships = board.getShips();
+        if (ships.size() != 5) return false;
+        List<Integer> expected = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
+        for (Ship ship : ships) {
+            if (!expected.remove(Integer.valueOf(ship.getLength()))) return false;
+        }
+        return expected.isEmpty();
+    }
+
+    // ─────────────────────────────────────────────
+    // DB helpers (no-op trong gameplay session-only)
+    // ─────────────────────────────────────────────
     public void saveBoardToDB(Board board) throws Exception {
-        // No-op: DB not required for gameplay
+        // No-op: DB không bắt buộc cho gameplay
         if (true) return;
         try (Connection c = DBConnection.getConnection()) {
             String bsql = "INSERT INTO boards (id,room_id,owner_id,is_ready) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE is_ready=?";
@@ -101,7 +168,6 @@ public class BoardService {
             bps.setBoolean(5, board.isReady());
             bps.executeUpdate();
 
-            // Delete existing ships/cells for this board
             c.prepareStatement("DELETE FROM cells WHERE board_id='" + board.getId() + "'").executeUpdate();
             c.prepareStatement("DELETE FROM ships WHERE board_id='" + board.getId() + "'").executeUpdate();
 
