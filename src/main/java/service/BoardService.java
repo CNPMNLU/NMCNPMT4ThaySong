@@ -75,8 +75,6 @@ public class BoardService {
 
         // Lớp 2: Kiểm tra tràn biên theo hướng
         if ("H".equals(dir)) {
-        int x = ship.getStartX(), y = ship.getStartY(), len = ship.getLength();
-        if (ship.getDirection() == Direction.H) {
             if (x + len > 10) return false;
         } else if ("V".equals(dir)) {
             if (y + len > 10) return false;
