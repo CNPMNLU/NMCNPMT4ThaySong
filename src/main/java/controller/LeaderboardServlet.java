@@ -19,9 +19,19 @@ public class LeaderboardServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
+
+        String playerId = (String) session.getAttribute("playerId");
+
         try {
-            List<Map<String,Object>> top = dao.getTopPlayers(20);
+            List<Map<String,Object>> top = dao.getTopPlayersByElo(100);
+
+            Map<String,Object> userRank = dao.getPlayerRank(playerId);
+
+            String userTrend = dao.getPlayerTrend(playerId);
+
             req.setAttribute("topPlayers", top);
+            req.setAttribute("userRank", userRank);
+            req.setAttribute("userTrend", userTrend);
             req.getRequestDispatcher("/leaderboard.jsp").forward(req, resp);
         } catch (Exception e) {
             e.printStackTrace();
