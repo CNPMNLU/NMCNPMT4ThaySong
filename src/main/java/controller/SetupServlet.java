@@ -9,6 +9,7 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.util.UUID;
+import com.google.gson.Gson;
 
 /**
  * KhoaDang: Gọi aiService.reset() khi bắt đầu game mới.
@@ -162,73 +163,29 @@ public class SetupServlet extends HttpServlet {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // UC-05: Parse JSON thuyền từ client và đặt lên Board
-    //   - Kiểm tra đủ 5 thuyền (BR-02)
-    //   - Mỗi thuyền qua isValidPlacement (BR-03)
-    //   - Kiểm tra hạm đội đúng chuẩn {5,4,3,3,2} (BR-02)
-    // ─────────────────────────────────────────────
-    private void parseAndPlaceShips(Board board, String shipsJson) throws Exception {
-        if (shipsJson == null || shipsJson.trim().isEmpty()) {
-            throw new IllegalArgumentException("Không nhận được dữ liệu thiết lập thuyền!");
-        }
-        shipsJson = shipsJson.trim();
-        // Loại bỏ ngoặc mảng bên ngoài
-        if (shipsJson.startsWith("[")) shipsJson = shipsJson.substring(1);
-        if (shipsJson.endsWith("]"))   shipsJson = shipsJson.substring(0, shipsJson.length() - 1);
-
-        if (shipsJson.isEmpty()) {
-            throw new IllegalArgumentException("Danh sách thuyền trống!");
+    private void parseAndPlaceShips(Board board, String shipsJson) {
+        if (shipsJson == null || shipsJson.isEmpty()) {
+            boardService.autoPlace(board);
+            return;
         }
 
-        // Phân tách từng object JSON thuyền
-        String[] entries = shipsJson.split("\\},\\s*\\{");
-        if (entries.length != 5) {
-            throw new IllegalArgumentException("Bạn phải đặt chính xác 5 thuyền!");
-        }
+        try {
+            Gson gson = new Gson();
+            Ship[] ships = gson.fromJson(shipsJson, Ship[].class);
 
-        for (String entry : entries) {
-            String type = extractJsonValue(entry, "type");
-            String lengthStr = extractJsonValue(entry, "length");
-            String xStr = extractJsonValue(entry, "x");
-            String yStr = extractJsonValue(entry, "y");
-            String dir = extractJsonValue(entry, "dir");
-
-            if (type.isEmpty() || lengthStr.isEmpty() || xStr.isEmpty() || yStr.isEmpty() || dir.isEmpty()) {
-                throw new IllegalArgumentException("Dữ liệu thông tin thuyền không hợp lệ!");
+            for (Ship s : ships) {
+                if (s != null) {
+                    s.setId(UUID.randomUUID().toString());
+                    s.setBoardId(board.getId());
+                    boardService.placeShip(board, s);
+                }
             }
-
-            int length = Integer.parseInt(lengthStr);
-            int x      = Integer.parseInt(xStr);
-            int y      = Integer.parseInt(yStr);
-
-            Ship ship = new Ship();
-            ship.setId(UUID.randomUUID().toString());
-            ship.setBoardId(board.getId());
-            ship.setType(type);
-            ship.setLength(length);
-            ship.setStartX(x);
-            ship.setStartY(y);
-            ship.setDirectionFromString(dir);
-
-            // UC-05: Kiểm tra hợp lệ trước khi đặt (BR-03)
-            if (!boardService.isValidPlacement(board, ship)) {
-                char colLetter = (char) ('A' + x);
-                int rowNumber  = y + 1;
-                throw new IllegalArgumentException(
-                    "Thuyền " + type + " ở vị trí " + colLetter + rowNumber
-                    + " hướng " + ("H".equals(dir) ? "Ngang" : "Dọc")
-                    + " không hợp lệ (vượt biên hoặc bị chồng lên thuyền khác)!"
-                );
-            }
-            boardService.placeShip(board, ship);
+        } catch (Exception e) {
+            System.err.println("[SetupServlet] Lỗi giải mã JSON tàu: " + e.getMessage());
         }
 
-        // Kiểm tra hạm đội đúng chuẩn {5,4,3,3,2} (BR-02)
-        if (!boardService.isValidFleet(board)) {
-            throw new IllegalArgumentException(
-                "Đội hình thuyền không đúng 5 thuyền tiêu chuẩn (5, 4, 3, 3, 2)!"
-            );
+        if (board.getShips().size() < 5) {
+            boardService.autoPlace(board);
         }
     }
 

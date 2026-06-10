@@ -136,9 +136,12 @@ public class GameServlet extends HttpServlet {
                 return;
             }
 
-            int x = Integer.parseInt(req.getParameter("x"));
-            int y = Integer.parseInt(req.getParameter("y"));
-
+            int x = parseInt(req.getParameter("x"), -1);
+            int y = parseInt(req.getParameter("y"), -1);
+            if (x < 0 || x > 9 || y < 0 || y > 9) {
+                out.print("{\"error\":\"invalid_coordinates\"}");
+                return;
+            }
             Board targetBoard = "PvE".equals(mode) ? aiBoard : playerBoard;
             ShotResult result = gameService.fireShot(targetBoard, gs, playerId, x, y);
 
@@ -150,26 +153,33 @@ public class GameServlet extends HttpServlet {
             if (result.getResult() == ShotResult.ResultType.GAME_OVER) {
                 gs.setStatus("finished");
                 gs.setWinnerId(playerId);
-                gameService.finishGame(gs, playerId);
 
-                long duration = gs.getStartedAt() != null
-                        ? Duration.between(gs.getStartedAt(), LocalDateTime.now()).getSeconds() : 0;
-                int score = scoreService.calculateScore(gs.getTotalTurns(), (int) duration);
+                int duration = (int) (gs.getStartedAt() != null
+                        ? Duration.between(gs.getStartedAt(), LocalDateTime.now()).getSeconds() : 0);
+                int score = scoreService.calculateScore(gs.getTotalTurns(), duration);
 
-                // Xác định tên người thắng/thua theo mode
                 String p2Display = "PvE".equals(mode) ? "AI" : p2Name;
+
                 saveGameRecord(gs, playerId, null, playerName, p2Display, playerName, mode, score, 0);
                 saveLeaderboard(playerId, true, score);
 
                 response.addProperty("score", score);
                 response.addProperty("winner", playerName);
-                //Flag rõ ràng để frontend không cần đoán
-                response.addProperty("gameOver", true);
+
                 session.setAttribute("lastScore", score);
                 session.setAttribute("gameWinner", playerName);
-            } else if ("PvE".equals(mode)) {
-                // Player chưa thắng → AI thực hiện lượt
-                appendAIMove(response, gs, session, playerId, playerName);
+
+                session.removeAttribute("roomId");
+                session.removeAttribute("gameState");
+                if ("PvE".equals(mode)) {
+                    session.removeAttribute("aiBoard");
+                    session.removeAttribute("aiService");
+                }
+            }
+            else if ("PvE".equals(mode)) {
+                JsonObject aiMove = doAITurn(gs, playerBoard, aiBoard, aiService,
+                                              playerId, playerName, session, response);
+                if (aiMove != null) response.add("aiMove", aiMove);
             }
             session.setAttribute("gameState", gs);
             out.print(response.toString());
