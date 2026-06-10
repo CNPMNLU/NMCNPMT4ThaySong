@@ -3,17 +3,18 @@ package service;
 import model.*;
 import service.ai.*;
 
-public class AIService {
+import java.io.Serializable;
+
+public class AIService implements Serializable {
+    private static final long serialVersionUID = 1L;
     public static final String AI_USER_ID = "AI_PLAYER";
     public static final String AI_USERNAME = "AI";
 
-    private AIStrategy strategy;
-    private HardAIStrategy hardStrategy;
+    private final AIStrategy strategy;
 
     public AIService(String difficulty) {
         if ("Hard".equalsIgnoreCase(difficulty)) {
-            hardStrategy = new HardAIStrategy();
-            strategy = hardStrategy;
+            strategy = new HardAIStrategy();
         } else {
             strategy = new EasyAIStrategy();
         }
@@ -24,8 +25,10 @@ public class AIService {
     }
 
     public void notifyResult(int x, int y, boolean hit, boolean sunk, Board opponentBoard) {
-        if (hardStrategy != null && hit) {
-            hardStrategy.onHit(x, y, sunk, opponentBoard);
-        }
+        strategy.onShotResult(x, y, hit, sunk, opponentBoard);
+    }
+
+    public void reset() {
+        strategy.reset();
     }
 }
